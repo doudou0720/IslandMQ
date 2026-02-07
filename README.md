@@ -1,118 +1,62 @@
-# 插件自述文件
+# IsLandMQ - 适用于ClassIsland 2.x的远程API调用插件
 
-本文件会在插件市场上显示。在安装插件后，本自述文件也会在【应用设置】->【插件】页面中显示。因此，本文件也将会是用户了解你的插件功能的重要途径，建议好好写 README。
+> [!WARNING]
+> 请注意，本插件尚未完成开发，暂时无法使用，欢迎前来PR
 
-**注意事项：**
+> [!WARNING]
+> 请注意，该拓展不能代替集控进行操作！
 
-- 嵌入图片时请使用网络图床。
-- 支持在这里直接调用 ClassIsland 内部的 Uri，例如[classisland://app/test/](classisland://app/test/)。
-- 本文件一般会在 ClassIsland 内置的 Markdown 渲染器（基于 [MdXaml](https://github.com/whistyun/MdXaml)）中渲染，仅支持部分 Markdown 语法。
+## 实现动机
 
-***
+这个灵感最初来源于 ClassIsland 讨论区 #574 ，讨论了使用其他语言实现拓展的可能性，本插件即是基于此而产生的。
 
-**支持的 Markdown 语法：**
+部分参考了 VSCode 的 拓展主机。
 
-> 本示例魔改自 [Leanote 博客](http://leanote.leanote.com/post/markdown-source-code)。
+## 预期实现功能
 
-# Welcome to ClassIsland! 欢迎来到ClassIsland!
- 
-## 1. 排版
- 
-**粗体** *斜体* 
- 
-~~这是一段错误的文本。~~
- 
-引用:
- 
-> 123123123123
- 
-有充列表:
- 1. 支持Vim
- 2. 支持Emacs
- 
-无序列表:
- 
- - 项目1
- - 项目2
- 
- 
-## 2. 图片与链接
- 
-网络图片:
-![Banner](https://github.com/user-attachments/assets/a815dd7d-8343-4da5-aee4-3f754aa297e4)
+- [ ] 链接方式
+- - [ ] TCP通道
+- - [ ] IPC通道 _(待定)_
 
-WPF 资源图片：
+> 请注意，本插件暂时不会考虑启用WebSocket和自建HTTP，只会使用由NetMQ提供的上述两种链接方式
 
-![1690356161339](pack://application:,,,/ClassIsland;component/Assets/AppLogo.png)
+<details>
+<summary>你可以点击此处了解原因</summary>
 
-链接:
- 
-[ClassIsland 官网](http://classisland.tech)
- 
-## 3. 标题
- 
-以下是各级标题, 最多支持5级标题
- 
-```
-# h1
-## h2
-### h3
-#### h4
-##### h4
-###### h5
-```
- 
-## 4. 代码
- 
-示例:
- 
-    function get(key) {
-        return m[key];
-    }
-    
-代码高亮示例:
- 
-``` javascript
-/**
-* nth element in the fibonacci series.
-* @param n >= 0
-* @return the nth element, >= 0.
-*/
-function fib(n) {
-  var a = 1, b = 1;
-  var tmp;
-  while (--n >= 0) {
-    tmp = a;
-    a += b;
-    b = tmp;
-  }
-  return a;
-}
- 
-document.write(fib(10));
-```
- 
-```python
-class Employee:
-   empCount = 0
- 
-   def __init__(self, name, salary):
-        self.name = name
-        self.salary = salary
-        Employee.empCount += 1
-```
- 
-# 5. Markdown 扩展
- 
-Markdown 扩展支持:
- 
-* 表格
- 
-## 5.1 表格
- 
-Item     | Value
--------- | ---
-Computer | \$1600
-Phone    | \$12
-Pipe     | \$1
- 
+- 在 NetMQ 中，对 ws:// 尚未支持
+
+- 在浏览器中由于 混合内容（Mixed Content）问题导致网页不能正常从HTTPS的网站发起HTTP链接，需要用户配置SSL证书
+
+- HTTP(S) 协议不支持事件广播功能
+
+如果你确实需要如上功能，可以自行使用任意一种受ZeroMQ支持的语言编写中转服务器，谢谢！
+</details>
+
+- [ ] 支持功能(按预计实现时间排列)
+- - [ ] Stage 1
+- - - [ ] 实现注册事件
+- - - [ ] 调换课程
+- - - [ ] 启用临时课表
+- - - [ ] 发送通知
+- - - [ ] 上/下课 事件广播
+- - - [ ] 放学事件广播
+- - [ ] Stage 2
+- - - [ ] 支持精细化控制权限
+- - - [ ] 支持配对码作为首次注册的必要条件
+- - - [ ] 支持在上课期间不展示通知
+- - [ ] Stage 3
+- - - 待补充
+
+## 许可证协议
+
+本项目使用 AGPL v3
+
+## FAQ
+
+1. 是否考虑支持 ClassIsland 1.7 ?
+
+可能会，但是可能不支持完整内容
+
+2. 多平台兼容性如何？
+
+优先保证 Windows ，其次为 Linux， MacOS不作保证

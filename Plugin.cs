@@ -12,7 +12,7 @@ namespace IslandMQ;
 [PluginEntrance]
 public class Plugin : PluginBase
 {
-    private NetMQREQServer? _netMqServer;
+    private NetMQREQServer? _netMqReqServer;
     private NetMQPUBServer? _netMqPubServer;
 
     public override void Initialize(HostBuilderContext context, IServiceCollection services)
@@ -37,8 +37,8 @@ public class Plugin : PluginBase
         var logger = IAppHost.GetService<ILogger<IslandMQ.Plugin>>();
         try
         {
-            _netMqServer = IAppHost.GetService<NetMQREQServer>();
-            _netMqServer.Start();
+            _netMqReqServer = IAppHost.GetService<NetMQREQServer>();
+            _netMqReqServer.Start();
             logger.LogInformation("NetMQ server started successfully!");
         }
         catch (Exception ex)
@@ -50,11 +50,11 @@ public class Plugin : PluginBase
     private void StopNetMqReqServer()
     {
         var logger = IAppHost.GetService<ILogger<IslandMQ.Plugin>>();
-        if (_netMqServer != null)
+        if (_netMqReqServer != null)
         {
             try
             {
-                _netMqServer.Stop();
+                _netMqReqServer.Stop();
                 logger.LogInformation("NetMQ server stopped successfully!");
             }
             catch (Exception ex)
@@ -65,13 +65,13 @@ public class Plugin : PluginBase
             {
                 try
                 {
-                    _netMqServer.Dispose();
+                    _netMqReqServer.Dispose();
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to dispose NetMQ server: {Message}", ex.Message);
                 }
-                _netMqServer = null;
+                _netMqReqServer = null;
             }
         }
     }

@@ -18,6 +18,7 @@ public class NetMQPUBServer : IDisposable
     private readonly object _threadLock = new object();
     private volatile bool _disposed;
     private readonly object _disposeLock = new object();
+    private NetMQPUBTaskQueue? _taskQueue;
     
 
     public event EventHandler<string>? ErrorOccurred;
@@ -135,9 +136,11 @@ public class NetMQPUBServer : IDisposable
 
             _logger.LogInformation("NetMQ PUB server started at {Endpoint}", _endpoint);
 
+            _taskQueue = new NetMQPUBTaskQueue(InternalPublish);
+            _taskQueue.Start();
+
             while (_isRunning)
             {
-                // PUB服务只需要等待消息发布，不需要接收消息
                 Thread.Sleep(100);
             }
         }
@@ -148,6 +151,19 @@ public class NetMQPUBServer : IDisposable
         }
         finally
         {
+            if (_taskQueue != null)
+            {
+                try
+                {
+                    _taskQueue.Stop();
+                    _taskQueue.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error disposing task queue: {Message}", ex.Message);
+                }
+                _taskQueue = null;
+            }
             DisposeSocket();
             lock (_disposeLock)
             {
@@ -162,6 +178,27 @@ public class NetMQPUBServer : IDisposable
     public void Publish(string message)
     {
         CheckDisposed();
+        try
+        {
+            if (_taskQueue != null && _isRunning)
+            {
+                _taskQueue.EnqueueMessage(message);
+                _logger.LogDebug("Message queued for publishing: {Message}", message);
+            }
+            else
+            {
+                _logger.LogWarning("Cannot publish message, server not running or task queue not initialized.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorOccurred?.Invoke(this, ex.Message);
+            _logger.LogError(ex, "Error queueing message: {Message}", ex.Message);
+        }
+    }
+
+    private void InternalPublish(string message)
+    {
         try
         {
             var socket = _serverSocket;

@@ -1,6 +1,8 @@
 using System;
+using System.Text.Json;
 using System.Threading;
 using ClassIsland.Shared;
+using IslandMQ.Utils;
 using Microsoft.Extensions.Logging;
 using NetMQ;
 using NetMQ.Sockets;
@@ -18,15 +20,27 @@ public class NetMQREQServer : IDisposable
     private readonly object _threadLock = new object();
     private volatile bool _disposed;
     private readonly object _disposeLock = new object();
+    private long _requestIdCounter = 0;
+    private const int ResponseVersion = 0;
     
 
-    public event EventHandler<string>? MessageReceived;
     public event EventHandler<Exception>? ErrorOccurred;
 
     public NetMQREQServer(string endpoint = "tcp://127.0.0.1:5555")
     {
         _logger = IAppHost.GetService<ILogger<IslandMQ.NetMQREQServer>>();
         _endpoint = endpoint;
+    }
+    
+    /// <summary>
+    /// 获取下一个请求ID，处理溢出情况
+    /// </summary>
+    /// <returns>唯一的请求ID</returns>
+    private long GetNextRequestId()
+    {
+        // 使用Interlocked.Increment实现线程安全的递增
+        // 使用long类型避免溢出问题
+        return Interlocked.Increment(ref _requestIdCounter);
     }
 
     private void CheckDisposed()
@@ -144,13 +158,14 @@ public class NetMQREQServer : IDisposable
                     var socket = _serverSocket;
                     if (socket != null && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(100), out var message))
                     {
-                        //TODO:测试代码待删除，业务逻辑入口
-                        MessageReceived?.Invoke(this, message);
-                        _logger.LogInformation("Received: {Message}", message);
+                        // 生成请求ID
+                        long requestId = GetNextRequestId();
+                        
+                        _logger.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
 
-                        var response = ProcessMessage(message);
+                        var response = ProcessMessage(message, requestId);
                         socket.SendFrame(response);
-                        _logger.LogInformation("Sent: {Response}", response);
+                        _logger.LogDebug("Sent (Request ID: {RequestId}): {Response}", requestId, response);
                     }
                 }
                 catch (Exception ex)
@@ -178,9 +193,68 @@ public class NetMQREQServer : IDisposable
         }
     }
 
-    private string ProcessMessage(string message)
+    private string ProcessMessage(string message, long requestId)
     {
-        return $"Server response: {message}";
+        try
+        {
+            // 解析JSON消息
+            var parseResult = JsonParser.Parse(message);
+            
+            if (!parseResult.Success)
+            {
+                // 返回错误响应
+                return CreateErrorResponse(parseResult.ErrorMessage ?? "Unknown error", requestId);
+            }
+            
+            // 调用API助手处理请求
+            var apiResult = ClassIslandAPIHelper.ProcessRequest(parseResult.ParsedData!.Value);
+            
+            // 根据StatusCode决定返回成功还是错误响应
+            if (apiResult.StatusCode >= 200 && apiResult.StatusCode < 300)
+            {
+                // 2xx状态码，返回成功响应
+                return CreateSuccessResponse(apiResult.Message, apiResult.Data, requestId, apiResult.StatusCode);
+            }
+            else
+            {
+                // 其他状态码，返回错误响应
+                return CreateErrorResponse(apiResult.Message, requestId, apiResult.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing message (Request ID: {RequestId}): {Message}", requestId, ex.Message);
+            return CreateErrorResponse("Internal server error", requestId);
+        }
+    }
+    
+    private string CreateSuccessResponse(string message, object? data = null, long requestId = 0, int statusCode = 200)
+    {
+        var response = new
+        {
+            success = true,
+            message = message,
+            data = data,
+            request_id = requestId,
+            status_code = statusCode,
+            version = ResponseVersion
+        };
+        
+        return JsonSerializer.Serialize(response);
+    }
+    
+    private string CreateErrorResponse(string errorMessage, long requestId = 0, int statusCode = 500)
+    {
+        var response = new
+        {
+            success = false,
+            error = errorMessage,
+            request_id = requestId,
+            status_code = statusCode,
+            version = ResponseVersion
+        };
+        
+        return JsonSerializer.Serialize(response);
     }
 
     private void DisposeSocket()

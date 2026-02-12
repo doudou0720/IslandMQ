@@ -3,7 +3,9 @@ using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Controls;
+using ClassIsland.Core.Extensions.Registry;
 using ClassIsland.Shared;
+using IslandMQ.Services.NotificationProviders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,8 +22,10 @@ public class Plugin : PluginBase
 
     public override void Initialize(HostBuilderContext context, IServiceCollection services)
     {
+        services.AddNotificationProvider<IslandMQNotificationProvider>();
         services.AddSingleton<NetMQREQServer>();
         services.AddSingleton<NetMQPUBServer>();
+
         
         var app = AppBase.Current;
         // Start/Stop Server

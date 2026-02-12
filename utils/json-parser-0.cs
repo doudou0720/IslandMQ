@@ -21,9 +21,6 @@ public class JsonParser0
                 };
             }
             
-            // 这里可以添加版本0特定的解析逻辑
-            // 例如验证必要的字段，转换数据结构等
-            
             return new JsonParseResult
             {
                 Success = true,

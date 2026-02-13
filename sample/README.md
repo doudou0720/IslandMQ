@@ -1,6 +1,6 @@
-# pyzmq 最小化应答示例
+# IslandMQ 客户端示例
 
-本示例展示了如何使用 pyzmq 库实现基本的请求-应答模式。
+本示例展示了如何使用 pyzmq 库与 IslandMQ 插件进行通信。
 
 ## 依赖
 
@@ -10,26 +10,23 @@
 pip install pyzmq
 ```
 
-## 运行步骤
+## 使用说明
 
-1. 首先启动服务器：
+### REQ/REP 模式 (请求-应答)
 
-```bash
-python server.py
-```
-
-2. 然后在另一个终端启动客户端：
+使用 `client.py` 向 IslandMQ 插件发送请求并接收响应。
 
 ```bash
-python client.py
+python client.py notice "测试提醒" --context="这是一条测试提醒" --mask-duration=2.0 --overlay-duration=6.0
 ```
 
-## 工作原理
+### PUB/SUB 模式 (发布-订阅)
 
-- 服务器使用 `zmq.REP` 套接字类型，绑定到 `tcp://*:5555` 端口
-- 客户端使用 `zmq.REQ` 套接字类型，连接到 `tcp://localhost:5555`
-- 客户端发送请求消息，服务器接收并处理后发送响应
-- 客户端接收响应并打印
+使用 `subscriber.py` 订阅 IslandMQ 插件发布的事件消息。
+
+```bash
+python subscriber.py
+```
 
 ## 命令参数说明
 
@@ -41,67 +38,64 @@ python client.py
 - `--mask-duration=<秒数>`: 遮罩显示持续时间，默认为 `3.0` 秒
 - `--overlay-duration=<秒数>`: 覆盖层显示持续时间，默认为 `5.0` 秒
 
-### 示例
+## 代码示例
 
-#### CLI 用法
-
-```bash
-# 发送带有自定义显示时间的通知
-python client.py notice "测试提醒" --context="这是一条测试提醒" --mask-duration=2.0 --overlay-duration=6.0
-```
-
-#### 在代码中使用
-
-以下代码属于 `client.py`（或客户端调用方），请求通过现有的 pyzmq 请求-应答套接字发送：
+### 发送 notice 请求
 
 ```python
-# 构造 notice 请求
+import zmq
+import json
+
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+socket.connect("tcp://localhost:5555")
+
 notice_request = {
     "version": 0,
     "command": "notice",
     "args": ["测试提醒", "--context=这是一条测试提醒", "--mask-duration=2.0", "--overlay-duration=6.0"]
 }
 
-# 发送请求
 socket.send_string(json.dumps(notice_request))
-
-# 接收响应
 response = socket.recv_string()
 response_data = json.loads(response)
+
+print(f"Status: {response_data['status_code']}")
+print(f"Message: {response_data['message']}")
+
+socket.close()
+context.term()
 ```
 
-这符合标准的 pyzmq REQ/REP 流程：构造请求、发送、接收响应。
+### 订阅事件消息
 
-## 示例输出
+```python
+import zmq
 
-### 服务器输出：
+context = zmq.Context()
+socket = context.socket(zmq.SUB)
+socket.connect("tcp://localhost:5556")
+socket.setsockopt_string(zmq.SUBSCRIBE, "")
+
+while True:
+    message = socket.recv_string()
+    print(f"Received event: {message}")
+
+socket.close()
+context.term()
 ```
-2025-02-12 10:00:00,000 - INFO - Socket created and bound to tcp://*:5555
-2025-02-12 10:00:00,001 - INFO - Server started, waiting for requests...
-2025-02-12 10:00:01,000 - INFO - Received request: {"version": 0, "command": "ping"}
-2025-02-12 10:00:01,101 - INFO - Sent response: {"status_code": 200, "message": "OK"}
-2025-02-12 10:00:01,200 - INFO - Received request: {"version": 0, "command": "notice", "args": ["测试提醒", "--context=这是一条测试提醒消息", "--allow-break=true"]}
-2025-02-12 10:00:01,201 - INFO - Processing notice: title=测试提醒, context=这是一条测试提醒消息, allow_break=True, mask_duration=3.0, overlay_duration=5.0
-2025-02-12 10:00:01,302 - INFO - Sent response: {"status_code": 200, "message": "Notice sent successfully"}
-```
 
-### 客户端输出：
-```
-Client started, sending requests...
+## 支持的命令
 
-=== Test 1: ping command ===
-Sending request: {"version": 0, "command": "ping"}
-Received response: {
-  "status_code": 200,
-  "message": "OK"
-}
+- `ping`: 健康检查
+- `notice`: 发送通知
+- `time`: 获取时间差值
 
-=== Test 4: notice command with all parameters ===
-Sending request: {"version": 0, "command": "notice", "args": ["测试提醒", "--context=这是一条测试提醒消息", "--allow-break=true"]}
-Received response: {
-  "status_code": 200,
-  "message": "Notice sent successfully"
-}
+## 发布的事件
 
-Client finished
-```
+IslandMQ 插件会发布以下事件：
+
+- `OnClass`: 上课事件
+- `OnBreakingTime`: 课间事件
+- `OnAfterSchool`: 放学事件
+- `CurrentTimeStateChanged`: 当前时间状态改变事件

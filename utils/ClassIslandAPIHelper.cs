@@ -3,13 +3,17 @@ using System.Globalization;
 using System.Text.Json;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
+using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Shared;
 using IslandMQ.Services.NotificationProviders;
+using Microsoft.Extensions.Logging;
 
 namespace IslandMQ.Utils;
 
 public static class ClassIslandAPIHelper
 {
+    private static readonly ILogger? _logger = IAppHost.GetService<ILogger<Plugin>>();
+    
     public static event EventHandler<NotificationEventArgs>? NotificationRequested;
     
     /// <summary>
@@ -27,17 +31,19 @@ public static class ClassIslandAPIHelper
                 : string.Empty;
             
             // 根据command调用相应的函数
-            switch (command)
-            {
-                case "ping":
-                    return Ping();
-                case "notice":
-                    return Notice(parsedData);
-                // 可以在这里添加更多命令
-                default:
-                    // 命令不存在，返回404
-                    return BuildErrorResult(404, "Command not found");
-            }
+        switch (command)
+        {
+            case "ping":
+                return Ping();
+            case "notice":
+                return Notice(parsedData);
+            case "time":
+                return Time();
+            // 可以在这里添加更多命令
+            default:
+                // 命令不存在，返回404
+                return BuildErrorResult(404, "Command not found");
+        }
         }
         else
         {
@@ -73,6 +79,38 @@ public static class ClassIslandAPIHelper
             StatusCode = 200,
             Message = "OK"
         };
+    }
+    
+    /// <summary>
+    /// time函数，返回精确时间与系统时间的差值
+    /// </summary>
+    /// <returns>处理结果</returns>
+    public static ApiHelperResult Time()
+    {
+        try
+        {
+            var systemTime = DateTime.Now;
+            
+            var exactTimeService = IAppHost.GetService<IExactTimeService>();
+            if (exactTimeService == null)
+            {
+                return BuildErrorResult(500, "Internal server error retrieving time difference");
+            }
+            
+            var exactTime = exactTimeService.GetCurrentLocalDateTime();
+            var timeDifference = exactTime - systemTime;
+            
+            return new ApiHelperResult
+            {
+                StatusCode = 200,
+                Message = timeDifference.TotalMilliseconds.ToString(CultureInfo.InvariantCulture)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error getting time difference");
+            return BuildErrorResult(500, "Internal server error retrieving time difference");
+        }
     }
     
     /// <summary>
@@ -157,16 +195,13 @@ public static class ClassIslandAPIHelper
         
         try
         {
-            // 触发通知请求事件
             string message = context;
-            // 当正文未指定时，强制覆写正文持续时间为0
             if (string.IsNullOrEmpty(message))
             {
                 overlayDuration = 0.0;
             }
             NotificationRequested?.Invoke(null, new NotificationEventArgs(title, message, maskDuration, overlayDuration));
             
-            // 根据 allow-break 返回相应的状态码
             if (allowBreak)
             {
                 return new ApiHelperResult
@@ -186,7 +221,8 @@ public static class ClassIslandAPIHelper
         }
         catch (Exception ex)
         {
-            return BuildErrorResult(503, $"Failed to send notice: {ex.Message}");
+            _logger?.LogError(ex, "Failed to send notice");
+            return BuildErrorResult(503, "Failed to send notice");
         }
     }
 }

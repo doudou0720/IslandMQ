@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Linq;
+using Json.Schema;
 
 namespace IslandMQ.Utils;
 
@@ -18,6 +20,51 @@ public class JsonParser0
                 {
                     Success = false,
                     ErrorMessage = "Invalid version for JsonParser0"
+                };
+            }
+            
+            // 获取command字段
+            if (!rootElement.TryGetProperty("command", out var commandElement) || commandElement.ValueKind != JsonValueKind.String)
+            {
+                return new JsonParseResult
+                {
+                    Success = false,
+                    ErrorMessage = "Missing or invalid 'command' parameter"
+                };
+            }
+            
+            string command = commandElement.GetString()!;
+            
+            // 使用JsonSchema验证请求
+            var schema = JsonSchemaDefinitions.GetSchemaForCommand(command);
+            if (schema == null)
+            {
+                return new JsonParseResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Unknown command: {command}"
+                };
+            }
+            
+            var validationResult = schema.Evaluate(rootElement);
+            
+            if (!validationResult.IsValid)
+            {
+                // 构建错误信息
+                string errorMessage = "Validation failed: ";
+                if (validationResult.Errors != null)
+                {
+                    errorMessage += string.Join("; ", validationResult.Errors.Select(e => $"{e.Key}: {e.Value}"));
+                }
+                else
+                {
+                    errorMessage += "Unknown validation error";
+                }
+                
+                return new JsonParseResult
+                {
+                    Success = false,
+                    ErrorMessage = errorMessage
                 };
             }
             

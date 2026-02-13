@@ -111,6 +111,27 @@ def run_tests(context, holder):
     }
     send_request(context, holder, notice_request_custom_both_durations)
 
+    print("\n=== Test 10: notice command without args ===")
+    notice_request_no_args = {
+        "version": 0,
+        "command": "notice"
+    }
+    send_request(context, holder, notice_request_no_args)
+
+    print("\n=== Test 11: invalid version ===")
+    invalid_version_request = {
+        "version": 1,
+        "command": "ping"
+    }
+    send_request(context, holder, invalid_version_request)
+
+    print("\n=== Test 12: time command ===")
+    time_request = {
+        "version": 0,
+        "command": "time"
+    }
+    send_request(context, holder, time_request)
+
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):
     ctx = zmq.Context()
@@ -150,6 +171,8 @@ if __name__ == "__main__":
     notice_parser.add_argument("--mask-duration", type=float, help="Mask duration in seconds")
     notice_parser.add_argument("--overlay-duration", type=float, help="Overlay duration in seconds")
     
+    time_parser = subparsers.add_parser("time", help="Get time difference between exact time and system time")
+    
     args = parser.parse_args()
     
     if args.command == "test" or args.command is None:
@@ -164,3 +187,15 @@ if __name__ == "__main__":
             context.term()
     elif args.command == "notice":
         send_notice(args.title, args.context, args.allow_break, args.mask_duration, args.overlay_duration)
+    elif args.command == "time":
+        ctx = zmq.Context()
+        holder = SocketHolder(create_socket(ctx))
+        try:
+            time_request = {
+                "version": 0,
+                "command": "time"
+            }
+            send_request(ctx, holder, time_request)
+        finally:
+            holder.socket.close()
+            ctx.term()

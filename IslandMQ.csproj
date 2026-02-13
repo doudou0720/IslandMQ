@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0-windows</TargetFramework>
@@ -16,6 +16,7 @@
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
         <PackageReference Include="NetMQ" Version="4.0.2.2" />
+        <PackageReference Include="JsonSchema.Net" Version="9.1.0" />
     </ItemGroup>
 
     <ItemGroup>

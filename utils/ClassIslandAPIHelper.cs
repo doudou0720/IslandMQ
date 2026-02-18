@@ -141,7 +141,7 @@ public static class ClassIslandAPIHelper
                     if (arg.ValueKind == JsonValueKind.String)
                     {
                         string argStr = arg.GetString()!;
-                        if (argStr.StartsWith("--context"))
+                        if (argStr.StartsWith("--context="))
                         {
                             // 解析 --context 参数
                             var parts = argStr.Split('=', 2);

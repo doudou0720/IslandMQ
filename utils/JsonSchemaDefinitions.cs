@@ -58,7 +58,7 @@ public static class JsonSchemaDefinitions
         )
         .Build();
 
-    private static readonly System.Collections.Generic.Dictionary<string, JsonSchema?> SchemaDictionary = new()
+    private static readonly System.Collections.Generic.Dictionary<string, JsonSchema> SchemaDictionary = new()
     {
         { "ping", PingRequestSchema },
         { "notice", NoticeRequestSchema },
@@ -79,7 +79,10 @@ public static class JsonSchemaDefinitions
             return null;
         }
         
-        SchemaDictionary.TryGetValue(command, out var schema);
-        return schema;
+        if (SchemaDictionary.TryGetValue(command, out var schema))
+        {
+            return schema;
+        }
+        return null;
     }
 }

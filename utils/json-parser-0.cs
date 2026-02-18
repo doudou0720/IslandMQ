@@ -5,7 +5,7 @@ using Json.Schema;
 
 namespace IslandMQ.Utils;
 
-public class JsonParser0
+public static class JsonParser0
 {
     private static IEnumerable<string> AllErrors(EvaluationResults results)
     {
@@ -28,13 +28,10 @@ public class JsonParser0
         }
     }
     
-    public static JsonParseResult Parse(string jsonString)
+    public static JsonParseResult Parse(JsonElement rootElement)
     {
         try
         {
-            using var jsonDocument = JsonDocument.Parse(jsonString);
-            var rootElement = jsonDocument.RootElement.Clone();
-            
             // 验证基本结构
             if (!rootElement.TryGetProperty("version", out var versionElement) || !versionElement.TryGetInt32(out var version) || version != 0)
             {

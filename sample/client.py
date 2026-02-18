@@ -51,14 +51,6 @@ def send_request(context, holder, payload):
 def run_tests(context, holder):
     failures = []
     
-    def check_test(name, success_expected=True):
-        def decorator(func):
-            result = func()
-            if result != success_expected:
-                failures.append(name)
-            return result
-        return decorator
-    
     print("\n=== Test 1: ping command ===")
     ping_request = {
         "version": 0,
@@ -216,6 +208,16 @@ def send_notice(title, context_text, allow_break, mask_duration, overlay_duratio
         ctx.term()
 
 
+def run_request_with_socket(payload):
+    ctx = zmq.Context()
+    holder = SocketHolder(create_socket(ctx))
+    try:
+        return send_request(ctx, holder, payload)
+    finally:
+        holder.socket.close()
+        ctx.term()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="IslandMQ Client")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -249,26 +251,14 @@ if __name__ == "__main__":
     elif args.command == "notice":
         send_notice(args.title, args.context, args.allow_break, args.mask_duration, args.overlay_duration)
     elif args.command == "time":
-        ctx = zmq.Context()
-        holder = SocketHolder(create_socket(ctx))
-        try:
-            time_request = {
-                "version": 0,
-                "command": "time"
-            }
-            send_request(ctx, holder, time_request)
-        finally:
-            holder.socket.close()
-            ctx.term()
+        time_request = {
+            "version": 0,
+            "command": "time"
+        }
+        run_request_with_socket(time_request)
     elif args.command == "lesson":
-        ctx = zmq.Context()
-        holder = SocketHolder(create_socket(ctx))
-        try:
-            get_lesson_request = {
-                "version": 0,
-                "command": "get_lesson"
-            }
-            send_request(ctx, holder, get_lesson_request)
-        finally:
-            holder.socket.close()
-            ctx.term()
+        get_lesson_request = {
+            "version": 0,
+            "command": "get_lesson"
+        }
+        run_request_with_socket(get_lesson_request)

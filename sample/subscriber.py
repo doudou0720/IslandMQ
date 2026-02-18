@@ -16,7 +16,7 @@ subscribed = False
 _cleaned_up = False
 
 # 清理函数
-def cleanup(signum=None, frame=None, exit_on_completion=False):
+def cleanup(signum=None, frame=None, *, exit_on_completion=False):
     global _cleaned_up, socket, context
     if _cleaned_up:
         return
@@ -25,12 +25,12 @@ def cleanup(signum=None, frame=None, exit_on_completion=False):
         try:
             socket.close()
             socket = None
-        except Exception as e:
-            logger.error(f"Error closing socket during cleanup: {e}")
+        except Exception:
+            logger.exception("Error closing socket during cleanup")
     try:
         context.term()
-    except Exception as e:
-        logger.error(f"Error terminating context during cleanup: {e}")
+    except Exception:
+        logger.exception("Error terminating context during cleanup")
     _cleaned_up = True
     if exit_on_completion:
         sys.exit(0)
@@ -65,8 +65,8 @@ try:
         except zmq.Again:
             # 超时，继续等待
             continue
-        except Exception as e:
-            logger.error(f"Error receiving message: {e}")
+        except Exception:
+            logger.exception("Error receiving message")
             # 可以在这里添加错误处理逻辑
             continue
             

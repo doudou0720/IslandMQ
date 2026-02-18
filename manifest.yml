@@ -7,10 +7,10 @@ id: IslandMQ
 name: IslandMQ
 description: 适用于ClassIsland 2.x的远程API调用插件
 entranceAssembly: "IslandMQ.dll"
-url: https://github.com/doudou0720/IslandMq
+url: https://github.com/doudou0720/IslandMQ
 version: 0.0.0.0
 apiVersion: 2.0.0.0
 author: doudou0720
 repoOwner: doudou0720
-repoName: IslandMq
+repoName: IslandMQ
 assetsRoot: publish

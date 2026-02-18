@@ -136,6 +136,14 @@ public class NetMQREQServer : IDisposable
         StopInternal();
     }
 
+    private bool IsFatal(Exception ex)
+    {
+        return ex is OutOfMemoryException ||
+               ex is StackOverflowException ||
+               ex is AccessViolationException ||
+               ex is ThreadAbortException;
+    }
+    
     private void RunServer()
     {
         lock (_disposeLock)
@@ -159,7 +167,7 @@ public class NetMQREQServer : IDisposable
                 
                 try
                 {
-                    var socket = _serverSocket;
+                    var socket = Volatile.Read(ref _serverSocket);
                     if (socket != null && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(100), out var message))
                     {
                         // 生成请求ID
@@ -174,6 +182,10 @@ public class NetMQREQServer : IDisposable
                 }
                 catch (Exception ex)
                 {
+                    if (IsFatal(ex))
+                    {
+                        throw;
+                    }
                     ErrorOccurred?.Invoke(this, ex);
                     _logger.LogError(ex, "Error: {Message}", ex.Message);
                 }
@@ -252,6 +264,7 @@ public class NetMQREQServer : IDisposable
         var response = new
         {
             success = false,
+            message = errorMessage,
             error = errorMessage,
             request_id = requestId,
             status_code = statusCode,

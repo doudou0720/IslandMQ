@@ -59,7 +59,7 @@ public class JsonParser
             switch (version)
             {
                 case 0:
-                    return JsonParser0.Parse(jsonString);
+                    return JsonParser0.Parse(rootElement);
                 default:
                     // 此分支目前不可达，因为版本已在上方验证
                     // 保留此分支用于防御性编程，防止未来添加新版本时遗漏

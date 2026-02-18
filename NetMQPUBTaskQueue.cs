@@ -76,30 +76,30 @@ public class NetMQPUBTaskQueue : IDisposable
         {
             _isRunning = false;
             if (_processingThread != null)
+            {
+                if (_processingThread.IsAlive)
                 {
-                    if (_processingThread.IsAlive)
+                    bool eventSignaled = false;
+                    lock (_disposeLock)
                     {
-                        bool eventSignaled = false;
-                        lock (_disposeLock)
+                        if (!_disposed)
                         {
-                            if (!_disposed)
-                            {
-                                eventSignaled = _threadExitEvent.Wait(2000);
-                            }
-                        }
-                        
-                        if (!eventSignaled && !_disposed)
-                        {
-                            _logger.LogWarning("Task queue thread did not signal exit within 2000ms, forcing join.");
-                            if (!_processingThread.Join(5000))
-                            {
-                                _logger.LogError("Task queue thread still running after 5000ms, proceeding with disposal.");
-                            }
+                            eventSignaled = _threadExitEvent.Wait(2000);
                         }
                     }
                     
-                    _processingThread = null;
+                    if (!eventSignaled && !_disposed)
+                    {
+                        _logger.LogWarning("Task queue thread did not signal exit within 2000ms, forcing join.");
+                        if (!_processingThread.Join(5000))
+                        {
+                            _logger.LogError("Task queue thread still running after 5000ms, proceeding with disposal.");
+                        }
+                    }
                 }
+                
+                _processingThread = null;
+            }
         }
     }
     

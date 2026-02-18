@@ -120,25 +120,14 @@ public class Plugin : PluginBase
         {
             try
             {
-                _netMqReqServer.Stop();
+                _netMqReqServer.Dispose();
                 _logger?.LogInformation("NetMQ server stopped successfully!");
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Failed to stop NetMQ server: {Message}", ex.Message);
+                _logger?.LogError(ex, "Failed to stop/dispose NetMQ server: {Message}", ex.Message);
             }
-            finally
-            {
-                try
-                {
-                    _netMqReqServer.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Failed to dispose NetMQ server: {Message}", ex.Message);
-                }
-                _netMqReqServer = null;
-            }
+            _netMqReqServer = null;
         }
     }
 
@@ -167,25 +156,14 @@ public class Plugin : PluginBase
         {
             try
             {
-                _netMqPubServer.Stop();
+                _netMqPubServer.Dispose();
                 _logger?.LogInformation("NetMQ PUB server stopped successfully!");
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Failed to stop NetMQ PUB server: {Message}", ex.Message);
+                _logger?.LogError(ex, "Failed to stop/dispose NetMQ PUB server: {Message}", ex.Message);
             }
-            finally
-            {
-                try
-                {
-                    _netMqPubServer.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Failed to dispose NetMQ PUB server: {Message}", ex.Message);
-                }
-                _netMqPubServer = null;
-            }
+            _netMqPubServer = null;
         }
     }
 }

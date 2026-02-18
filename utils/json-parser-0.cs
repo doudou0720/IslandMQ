@@ -5,8 +5,16 @@ using Json.Schema;
 
 namespace IslandMQ.Utils;
 
+/// <summary>
+/// 版本 0 的 JSON 解析器
+/// </summary>
 public static class JsonParser0
 {
+    /// <summary>
+    /// 递归获取所有验证错误
+    /// </summary>
+    /// <param name="results">验证结果</param>
+    /// <returns>错误消息列表</returns>
     private static IEnumerable<string> AllErrors(EvaluationResults results)
     {
         if (results.Errors != null)
@@ -28,6 +36,11 @@ public static class JsonParser0
         }
     }
     
+    /// <summary>
+    /// 解析版本 0 的 JSON 元素
+    /// </summary>
+    /// <param name="rootElement">根 JSON 元素</param>
+    /// <returns>解析结果</returns>
     public static JsonParseResult Parse(JsonElement rootElement)
     {
         try
@@ -95,12 +108,12 @@ public static class JsonParser0
                 ErrorMessage = $"Invalid JSON for version 0: {ex.Message}"
             };
         }
-        catch (OutOfMemoryException)
-        {
-            throw;
-        }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             return new JsonParseResult
             {
                 Success = false,

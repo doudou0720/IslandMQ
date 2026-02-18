@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace IslandMQ.Utils;
 
+/// <summary>
+/// ClassIsland API 助手类，提供各种 API 功能
+/// </summary>
 public static class ClassIslandAPIHelper
 {
     private static readonly ILogger? _logger = IAppHost.GetService<ILogger<Plugin>>();
@@ -156,7 +159,10 @@ public static class ClassIslandAPIHelper
                             var parts = argStr.Split('=', 2);
                             if (parts.Length == 2)
                             {
-                                allowBreak = parts[1].ToLower() == "true";
+                                if (bool.TryParse(parts[1], out var parsed))
+                                {
+                                    allowBreak = parsed;
+                                }
                             }
                         }
                         else if (argStr.StartsWith("--mask-duration="))
@@ -191,7 +197,7 @@ public static class ClassIslandAPIHelper
         }
         
         // 验证必填参数
-        if (string.IsNullOrEmpty(title))
+        if (string.IsNullOrWhiteSpace(title))
         {
             return BuildErrorResult(400, "Missing required parameter 'title'");
         }
@@ -276,11 +282,27 @@ public static class ClassIslandAPIHelper
     }
 }
 
+/// <summary>
+/// API 助手结果类，包含泛型数据
+/// </summary>
+/// <typeparam name="T">数据类型</typeparam>
 public record ApiHelperResult<T>
 {
+    /// <summary>
+    /// 状态码
+    /// </summary>
     public int StatusCode { get; init; }
+    /// <summary>
+    /// 消息
+    /// </summary>
     public string Message { get; init; } = string.Empty;
+    /// <summary>
+    /// 数据
+    /// </summary>
     public T? Data { get; init; }
 }
 
+/// <summary>
+/// API 助手结果类，使用 object 类型数据
+/// </summary>
 public record ApiHelperResult : ApiHelperResult<object>;

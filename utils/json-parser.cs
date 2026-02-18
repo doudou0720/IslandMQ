@@ -3,19 +3,27 @@ using System.Threading;
 
 namespace IslandMQ.Utils;
 
-public class JsonParser
+/// <summary>
+/// JSON 解析器类，用于解析和验证 API 请求
+/// </summary>
+public static class JsonParser
 {
-    private static bool IsFatal(Exception ex)
-    {
-        return ex is OutOfMemoryException ||
-               ex is StackOverflowException ||
-               ex is AccessViolationException ||
-               ex is ThreadAbortException;
-    }
+
     
+    /// <summary>
+    /// 最小支持的版本号
+    /// </summary>
     public const int MIN_SUPPORTED_VERSION = 0;
+    /// <summary>
+    /// 最大支持的版本号
+    /// </summary>
     public const int MAX_SUPPORTED_VERSION = 0;
     
+    /// <summary>
+    /// 解析 JSON 字符串
+    /// </summary>
+    /// <param name="jsonString">要解析的 JSON 字符串</param>
+    /// <returns>解析结果</returns>
     public static JsonParseResult Parse(string jsonString)
     {
         try
@@ -80,7 +88,7 @@ public class JsonParser
         }
         catch (Exception ex)
         {
-            if (IsFatal(ex))
+            if (ExceptionHelper.IsFatal(ex))
             {
                 throw;
             }
@@ -93,10 +101,25 @@ public class JsonParser
     }
 }
 
+/// <summary>
+/// JSON 解析结果类
+/// </summary>
 public class JsonParseResult
 {
+    /// <summary>
+    /// 解析是否成功
+    /// </summary>
     public bool Success { get; init; }
+    /// <summary>
+    /// 错误消息
+    /// </summary>
     public string? ErrorMessage { get; init; }
+    /// <summary>
+    /// 解析后的数据
+    /// </summary>
     public JsonElement? ParsedData { get; init; }
+    /// <summary>
+    /// 版本号
+    /// </summary>
     public int? Version { get; init; }
 }

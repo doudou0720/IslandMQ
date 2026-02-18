@@ -9,13 +9,20 @@ using NetMQ.Sockets;
 
 namespace IslandMQ;
 
+/// <summary>
+/// 提供基于 NetMQ 的请求-响应模式服务器实现
+/// </summary>
+/// <remarks>
+/// 该类实现了 IDisposable 接口，用于管理 NetMQ 响应者套接字
+/// 支持处理客户端请求并返回响应
+/// </remarks>
 public class NetMQREQServer : IDisposable
 {
     private ResponseSocket? _serverSocket;
     private Thread? _serverThread;
     private volatile bool _isRunning;
     private readonly string _endpoint;
-    private readonly ILogger<NetMQREQServer> _logger;
+    private readonly ILogger<NetMQREQServer>? _logger;
     private readonly ManualResetEventSlim _threadExitEvent = new ManualResetEventSlim(true);
     private readonly object _threadLock = new object();
     private volatile bool _disposed;
@@ -26,6 +33,10 @@ public class NetMQREQServer : IDisposable
 
     public event EventHandler<Exception>? ErrorOccurred;
 
+    /// <summary>
+    /// 初始化 <see cref="NetMQREQServer"/> 类的新实例
+    /// </summary>
+    /// <param name="endpoint">服务器绑定的端点地址，默认为 "tcp://127.0.0.1:5555"</param>
     public NetMQREQServer(string endpoint = "tcp://127.0.0.1:5555")
     {
         _logger = IAppHost.GetService<ILogger<IslandMQ.NetMQREQServer>>();
@@ -43,6 +54,10 @@ public class NetMQREQServer : IDisposable
         return Interlocked.Increment(ref _requestIdCounter);
     }
 
+    /// <summary>
+    /// 检查对象是否已被释放
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     private void CheckDisposed()
     {
         if (_disposed)
@@ -51,6 +66,10 @@ public class NetMQREQServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// 启动 REQ 服务器
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Start()
     {
         CheckDisposed();
@@ -63,18 +82,28 @@ public class NetMQREQServer : IDisposable
             }
             if (_serverThread != null && _serverThread.IsAlive)
             {
-                _logger.LogWarning("Previous server thread still alive, waiting for exit...");
+                _logger?.LogWarning("Previous server thread still alive, waiting for exit...");
                 bool waited = false;
+                bool isDisposed;
                 lock (_disposeLock)
                 {
-                    if (!_disposed)
+                    isDisposed = _disposed;
+                }
+                if (!isDisposed)
+                {
+                    try
                     {
                         waited = _threadExitEvent.Wait(3000);
                     }
+                    catch (ObjectDisposedException)
+                    {
+                        // 事件已被释放，视为已等待完成
+                        waited = true;
+                    }
                 }
-                if (!waited && !_disposed)
+                if (!waited && !isDisposed)
                 {
-                    _logger.LogError("Previous thread still running, cannot start new server.");
+                    _logger?.LogError("Previous thread still running, cannot start new server.");
                     return;
                 }
             }
@@ -89,6 +118,9 @@ public class NetMQREQServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// 内部停止服务器的方法
+    /// </summary>
     private void StopInternal()
     {
         lock (_threadLock)
@@ -101,20 +133,31 @@ public class NetMQREQServer : IDisposable
                 if (_serverThread.IsAlive)
                 {
                     bool eventSignaled = false;
+                    bool isDisposed;
                     lock (_disposeLock)
                     {
-                        if (!_disposed)
+                        isDisposed = _disposed;
+                    }
+                    
+                    if (!isDisposed)
+                    {
+                        try
                         {
                             eventSignaled = _threadExitEvent.Wait(2000);
                         }
+                        catch (ObjectDisposedException)
+                        {
+                            // 事件已被释放，视为已等待完成
+                            eventSignaled = true;
+                        }
                     }
                     
-                    if (!eventSignaled && !_disposed)
+                    if (!eventSignaled && !isDisposed)
                     {
-                        _logger.LogWarning("Server thread did not signal exit within 2000ms, forcing join.");
+                        _logger?.LogWarning("Server thread did not signal exit within 2000ms, forcing join.");
                         if (!_serverThread.Join(5000))
                         {
-                            _logger.LogError("Server thread still running after 5000ms, proceeding with socket disposal.");
+                            _logger?.LogError("Server thread still running after 5000ms, proceeding with socket disposal.");
                             needsForcedDispose = true;
                         }
                     }
@@ -130,20 +173,21 @@ public class NetMQREQServer : IDisposable
         }
     }
     
+    /// <summary>
+    /// 停止 REQ 服务器
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Stop()
     {
         CheckDisposed();
         StopInternal();
     }
 
-    private bool IsFatal(Exception ex)
-    {
-        return ex is OutOfMemoryException ||
-               ex is StackOverflowException ||
-               ex is AccessViolationException ||
-               ex is ThreadAbortException;
-    }
+
     
+    /// <summary>
+    /// 服务器运行方法，在单独的线程中执行
+    /// </summary>
     private void RunServer()
     {
         lock (_disposeLock)
@@ -160,7 +204,7 @@ public class NetMQREQServer : IDisposable
             _serverSocket = new ResponseSocket();
             _serverSocket.Bind(_endpoint);
 
-            _logger.LogInformation("NetMQ server started at {Endpoint}", _endpoint);
+            _logger?.LogInformation("NetMQ server started at {Endpoint}", _endpoint);
 
             while (_isRunning)
             {
@@ -173,28 +217,32 @@ public class NetMQREQServer : IDisposable
                         // 生成请求ID
                         long requestId = GetNextRequestId();
                         
-                        _logger.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
+                        _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
 
                         var response = ProcessMessage(message, requestId);
                         socket.SendFrame(response);
-                        _logger.LogDebug("Sent (Request ID: {RequestId}): {Response}", requestId, response);
+                        _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", requestId, response);
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (IsFatal(ex))
+                    if (ExceptionHelper.IsFatal(ex))
                     {
                         throw;
                     }
                     ErrorOccurred?.Invoke(this, ex);
-                    _logger.LogError(ex, "Error: {Message}", ex.Message);
+                    _logger?.LogError(ex, "Error: {Message}", ex.Message);
                 }
             }
         }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             ErrorOccurred?.Invoke(this, ex);
-            _logger.LogError(ex, "Server error: {Message}", ex.Message);
+            _logger?.LogError(ex, "Server error: {Message}", ex.Message);
         }
         finally
         {
@@ -209,6 +257,12 @@ public class NetMQREQServer : IDisposable
         }
     }
 
+    /// <summary>
+    /// 处理接收到的消息
+    /// </summary>
+    /// <param name="message">接收到的消息内容</param>
+    /// <param name="requestId">请求ID</param>
+    /// <returns>处理后的响应消息</returns>
     private string ProcessMessage(string message, long requestId)
     {
         try
@@ -239,11 +293,19 @@ public class NetMQREQServer : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing message (Request ID: {RequestId}): {Message}", requestId, ex.Message);
+            _logger?.LogError(ex, "Error processing message (Request ID: {RequestId}): {Message}", requestId, ex.Message);
             return CreateErrorResponse("Internal server error", requestId);
         }
     }
     
+    /// <summary>
+    /// 创建成功响应消息
+    /// </summary>
+    /// <param name="message">响应消息</param>
+    /// <param name="data">响应数据</param>
+    /// <param name="requestId">请求ID</param>
+    /// <param name="statusCode">状态码</param>
+    /// <returns>序列化后的成功响应消息</returns>
     private string CreateSuccessResponse(string message, object? data = null, long requestId = 0, int statusCode = 200)
     {
         var response = new
@@ -259,6 +321,13 @@ public class NetMQREQServer : IDisposable
         return JsonSerializer.Serialize(response);
     }
     
+    /// <summary>
+    /// 创建错误响应消息
+    /// </summary>
+    /// <param name="errorMessage">错误消息</param>
+    /// <param name="requestId">请求ID</param>
+    /// <param name="statusCode">状态码</param>
+    /// <returns>序列化后的错误响应消息</returns>
     private string CreateErrorResponse(string errorMessage, long requestId = 0, int statusCode = 500)
     {
         var response = new
@@ -274,6 +343,9 @@ public class NetMQREQServer : IDisposable
         return JsonSerializer.Serialize(response);
     }
 
+    /// <summary>
+    /// 释放服务器套接字资源
+    /// </summary>
     private void DisposeSocket()
     {
         var socket = Interlocked.Exchange(ref _serverSocket, null);
@@ -285,11 +357,14 @@ public class NetMQREQServer : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error disposing socket: {Message}", ex.Message);
+                _logger?.LogError(ex, "Error disposing socket: {Message}", ex.Message);
             }
         }
     }
 
+    /// <summary>
+    /// 释放 <see cref="NetMQREQServer"/> 类的所有资源
+    /// </summary>
     public void Dispose()
     {
         lock (_disposeLock)

@@ -115,7 +115,7 @@ def run_tests(context, holder):
         "args": ["--context=缺少标题的提醒"]
     }
     ok, resp = send_request(context, holder, notice_request_no_title)
-    if not (ok and resp.get("success")):
+    if not (ok and not resp.get("success")):
         failures.append("Test 7: notice command without title")
 
     print("\n=== Test 8: notice command with custom mask duration ===")

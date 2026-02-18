@@ -1,0 +1,42 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ main, publish ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        cache: true
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build and Publish
+      run: dotnet publish -p:CreateCipx=true
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-path: './cipx/*'
+
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: IslandMQ-universal
+        path: |
+          ./cipx/*

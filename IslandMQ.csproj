@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
     <PropertyGroup>
         <TargetFramework>net8.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -8,7 +10,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <ClassIslandPluginSdkVersion>1.7.106.2-dev-v2</ClassIslandPluginSdkVersion>
+        <ClassIslandPluginSdkVersion>2.0.2</ClassIslandPluginSdkVersion>
     </PropertyGroup>
 
     <ItemGroup>

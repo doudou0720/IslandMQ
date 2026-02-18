@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableDynamicLoading>True</EnableDynamicLoading>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ClassIslandPluginSdkVersion>2.0.2</ClassIslandPluginSdkVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ClassIsland.PluginSdk" Version="$(ClassIslandPluginSdkVersion)">
+            <ExcludeAssets>runtime; native</ExcludeAssets>
+        </PackageReference>
+        <PackageReference Include="NetMQ" Version="4.0.2.2" />
+        <PackageReference Include="JsonSchema.Net" Version="9.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="manifest.yml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="README.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="icon.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>

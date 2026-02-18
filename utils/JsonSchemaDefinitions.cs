@@ -95,7 +95,11 @@ public static class JsonSchemaDefinitions
     /// 根据命令获取相应的Schema
     /// </summary>
     /// <param name="command">命令名称</param>
-    /// <returns>对应的Schema，如果命令未知则返回null</returns>
+    /// <summary>
+    /// 根据命令名称返回对应的预定义 JSON Schema。
+    /// </summary>
+    /// <param name="command">命令名称（例如 "ping"、"notice"、"time"、"get_lesson"），大小写须与注册键匹配。</param>
+    /// <returns>对应的 JsonSchema 实例；若命令为 null 或未注册则返回 null。</returns>
     public static JsonSchema? GetSchemaForCommand(string? command)
     {
         if (command == null)

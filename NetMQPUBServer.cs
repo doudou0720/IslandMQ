@@ -34,6 +34,9 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 初始化 <see cref="NetMQPUBServer"/> 类的新实例
     /// </summary>
+    /// <summary>
+    /// 初始化 NetMQ PUB 服务器实例并设置要绑定的端点。
+    /// </summary>
     /// <param name="endpoint">服务器绑定的端点地址，默认为 "tcp://127.0.0.1:5556"</param>
     public NetMQPUBServer(string endpoint = "tcp://127.0.0.1:5556")
     {
@@ -44,7 +47,10 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 检查对象是否已被释放
     /// </summary>
-    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
+    /// <summary>
+    /// 在执行操作前验证实例未被释放；如果已释放则抛出异常。
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出。</exception>
     private void CheckDisposed()
     {
         if (_disposed)
@@ -56,6 +62,12 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 启动 PUB 服务器
     /// </summary>
+    /// <summary>
+    /// 启动并运行后台 PUB 服务器线程以处理发布操作。
+    /// </summary>
+    /// <remarks>
+    /// 如果服务器已在运行则立即返回。若检测到先前的服务器线程仍在运行，会等待最多 3 秒以让其退出；若未退出则不会启动新的服务器线程。成功启动后会设置运行标志并创建执行 <c>RunServer</c> 的后台线程。
+    /// </remarks>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Start()
     {
@@ -107,7 +119,15 @@ public class NetMQPUBServer : IDisposable
 
     /// <summary>
     /// 内部停止服务器的方法
+    /// <summary>
+    /// 在内部停止发布服务器：将运行标志设为 false，等待后台线程退出，并在必要时强制释放套接字资源后清除线程引用。
     /// </summary>
+    /// <remarks>
+    /// - 在 _threadLock 下执行以保证线程安全。 
+    /// - 如果后台线程仍然存活，会等待最多 2000ms 的退出信号；若未收到信号，会尝试以最多 5000ms 的 Join 等待线程结束。 
+    /// - 若线程在等待后仍未结束，则调用 DisposeSocket 强制释放套接字以避免阻塞进程终止。 
+    /// - 最终会将 _serverThread 置为 null，不抛出异常（异常在调用处或通过事件上报）。
+    /// </remarks>
     private void StopInternal()
     {
         lock (_threadLock)
@@ -163,7 +183,10 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 停止 PUB 服务器
     /// </summary>
-    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
+    /// <summary>
+    /// 停止服务器并等待其优雅退出。
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当实例已被释放时抛出。</exception>
     public void Stop()
     {
         CheckDisposed();
@@ -174,7 +197,12 @@ public class NetMQPUBServer : IDisposable
 
     /// <summary>
     /// 服务器运行方法，在单独的线程中执行
+    /// <summary>
+    /// 在后台线程上运行 PUB 服务器循环：创建并绑定 PublisherSocket，启动发布任务队列并处理入队消息直到停止。
     /// </summary>
+    /// <remarks>
+    /// 在发生非致命异常时通过 <c>ErrorOccurred</c> 事件报告错误。方法返回前会确保任务队列和套接字被安全停止与释放，并在未处于已释放状态时发出线程退出信号。
+    /// </remarks>
     private void RunServer()
     {
         lock (_disposeLock)
@@ -240,7 +268,12 @@ public class NetMQPUBServer : IDisposable
     /// 发布消息
     /// </summary>
     /// <param name="message">要发布的消息内容</param>
-    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
+    /// <summary>
+    /// 将消息加入内部任务队列以供后续异步发布。
+    /// </summary>
+    /// <param name="message">要发布的文本消息，将被放入服务器的发布队列。</param>
+    /// <exception cref="ObjectDisposedException">当实例已被释放时抛出。</exception>
+    /// <remarks>若服务器未运行或内部队列未初始化，则不会将消息入队，消息将被忽略（不会抛出异常）。发生内部错误时会通过 <see cref="ErrorOccurred"/> 事件上报。</remarks>
     public void Publish(string message)
     {
         CheckDisposed();
@@ -266,7 +299,12 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 内部发布消息的方法
     /// </summary>
-    /// <param name="message">要发布的消息内容</param>
+    /// <summary>
+    /// 将指定消息通过当前 PublisherSocket 发送给订阅者（仅当服务器正在运行时）。
+    /// </summary>
+    /// <param name="message">要发布的消息内容。</param>
+    /// <remarks>
+    /// 如果服务器未运行则不会发送消息并会记录警告；发生异常时会触发 <see cref="ErrorOccurred"/> 事件并记录错误。</remarks>
     private void InternalPublish(string message)
     {
         try
@@ -291,7 +329,12 @@ public class NetMQPUBServer : IDisposable
 
     /// <summary>
     /// 释放服务器套接字资源
+    /// <summary>
+    /// 原子地将内部发布套接字引用替换为 null，并释放先前的套接字资源（如果存在）。
     /// </summary>
+    /// <remarks>
+    /// 如果释放套接字时发生异常，会通过可用的记录器记录错误并吞掉该异常以保证继续执行。
+    /// </remarks>
     private void DisposeSocket()
     {
         var socket = Interlocked.Exchange(ref _serverSocket, null);
@@ -310,7 +353,12 @@ public class NetMQPUBServer : IDisposable
 
     /// <summary>
     /// 释放 <see cref="NetMQPUBServer"/> 类的所有资源
+    /// <summary>
+    /// 停止服务器（如果正在运行）、释放内部托管资源并将实例标记为已释放；可安全重复调用。
     /// </summary>
+    /// <remarks>
+    /// 调用会触发内部停止逻辑、释放用于线程同步的退出事件，并抑制终结器以避免重复释放。
+    /// </remarks>
     public void Dispose()
     {
         lock (_disposeLock)

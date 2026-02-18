@@ -23,7 +23,12 @@ public static class JsonParser
     /// 解析 JSON 字符串
     /// </summary>
     /// <param name="jsonString">要解析的 JSON 字符串</param>
-    /// <returns>解析结果</returns>
+    /// <summary>
+    /// 解析并验证包含版本字段的 JSON 字符串，并根据版本调度到对应的版本解析器。
+    /// </summary>
+    /// <param name="jsonString">根对象形式的 JSON 文本，必须包含名为 "version" 的整数属性。</param>
+    /// <returns>包含解析结果：若成功则 Success 为 true 并填充 ParsedData 与 Version；失败时 Success 为 false 且 ErrorMessage 给出原因。</returns>
+    /// <exception cref="Exception">当遇到致命异常且 ExceptionHelper.IsFatal 返回 true 时会重新抛出该异常。</exception>
     public static JsonParseResult Parse(string jsonString)
     {
         try

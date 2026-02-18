@@ -36,7 +36,10 @@ public class NetMQREQServer : IDisposable
     /// <summary>
     /// 初始化 <see cref="NetMQREQServer"/> 类的新实例
     /// </summary>
-    /// <param name="endpoint">服务器绑定的端点地址，默认为 "tcp://127.0.0.1:5555"</param>
+    /// <summary>
+    /// 初始化一个 NetMQ 请求-响应服务器实例，并设置用于绑定的端点地址。
+    /// </summary>
+    /// <param name="endpoint">要绑定的端点地址，例如 "tcp://127.0.0.1:5555"；默认值为 "tcp://127.0.0.1:5555"。</param>
     public NetMQREQServer(string endpoint = "tcp://127.0.0.1:5555")
     {
         _logger = IAppHost.GetService<ILogger<IslandMQ.NetMQREQServer>>();
@@ -46,7 +49,10 @@ public class NetMQREQServer : IDisposable
     /// <summary>
     /// 获取下一个请求ID，处理溢出情况
     /// </summary>
-    /// <returns>唯一的请求ID</returns>
+    /// <summary>
+    /// 生成并返回下一个唯一的请求标识，确保在并发环境中递增不会冲突。
+    /// </summary>
+    /// <returns>下一个递增的、唯一的请求 ID。</returns>
     private long GetNextRequestId()
     {
         // 使用Interlocked.Increment实现线程安全的递增
@@ -57,7 +63,10 @@ public class NetMQREQServer : IDisposable
     /// <summary>
     /// 检查对象是否已被释放
     /// </summary>
-    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
+    /// <summary>
+    /// 验证当前实例未被释放；如果已释放则抛出异常。
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出。</exception>
     private void CheckDisposed()
     {
         if (_disposed)
@@ -68,6 +77,9 @@ public class NetMQREQServer : IDisposable
 
     /// <summary>
     /// 启动 REQ 服务器
+    /// </summary>
+    /// <summary>
+    /// 启动服务器后台线程并开始处理请求；如果服务器已在运行则不做任何操作，并在必要时等待先前线程退出以确保同一时间仅有一个服务器实例运行。
     /// </summary>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Start()
@@ -120,7 +132,16 @@ public class NetMQREQServer : IDisposable
 
     /// <summary>
     /// 内部停止服务器的方法
+    /// <summary>
+    /// 停止并清理服务器后台线程的内部实现：停止循环标志、等待线程退出并根据超时强制释放套接字，然后清除线程引用。
     /// </summary>
+    /// <remarks>
+    /// - 将 _isRunning 设为 false，通知服务器循环停止。  
+    /// - 在 _threadLock 保护下操作线程引用和等待逻辑，保证并发安全。  
+    /// - 若存在活动线程，优先等待最多 2000ms 的 _threadExitEvent 信号（若对象已被释放则视为已退出）；若未收到信号，再尝试阻塞 Join 最多 5000ms。  
+    /// - 若线程在上述等待后仍未退出，则调用 DisposeSocket 强制释放底层套接字以促使线程终止。  
+    /// - 最终将 _serverThread 设为 null。
+    /// </remarks>
     private void StopInternal()
     {
         lock (_threadLock)
@@ -176,6 +197,9 @@ public class NetMQREQServer : IDisposable
     /// <summary>
     /// 停止 REQ 服务器
     /// </summary>
+    /// <summary>
+    /// 停止正在运行的 NetMQ 响应服务器并等待后台线程安全退出。
+    /// </summary>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Stop()
     {
@@ -187,7 +211,12 @@ public class NetMQREQServer : IDisposable
     
     /// <summary>
     /// 服务器运行方法，在单独的线程中执行
+    /// <summary>
+    /// 在后台线程中运行 NetMQ 响应服务器：绑定到配置的端点，循环接收请求、处理并发送响应，并在结束时释放资源与通知线程退出信号。
     /// </summary>
+    /// <remarks>
+    /// 循环期间对外部请求进行接收、生成请求 ID、调用消息处理并将响应发送回客户端；发生非致命异常时触发 <see cref="ErrorOccurred"/> 事件并记录错误，发生致命异常则向上抛出。在退出或发生错误后会处置底层 socket 并设置线程退出事件以通知等待方。
+    /// </remarks>
     private void RunServer()
     {
         lock (_disposeLock)
@@ -262,7 +291,12 @@ public class NetMQREQServer : IDisposable
     /// </summary>
     /// <param name="message">接收到的消息内容</param>
     /// <param name="requestId">请求ID</param>
-    /// <returns>处理后的响应消息</returns>
+    /// <summary>
+    /// 处理接收到的请求消息并生成规范化的 JSON 响应。
+    /// </summary>
+    /// <param name="message">包含请求的 JSON 字符串。</param>
+    /// <param name="requestId">为该请求分配的唯一请求标识，会包含在响应中以便跟踪。</param>
+    /// <returns>JSON 格式的响应字符串，包含字段 `success`、`message`/`error`、可选的 `data`、`request_id`、`status_code` 和 `version`。</returns>
     private string ProcessMessage(string message, long requestId)
     {
         try
@@ -305,7 +339,14 @@ public class NetMQREQServer : IDisposable
     /// <param name="data">响应数据</param>
     /// <param name="requestId">请求ID</param>
     /// <param name="statusCode">状态码</param>
-    /// <returns>序列化后的成功响应消息</returns>
+    /// <summary>
+    /// 构建并序列化一个表示成功响应的 JSON 字符串。
+    /// </summary>
+    /// <param name="message">响应的消息文本，映射到返回对象的 `message` 字段。</param>
+    /// <param name="data">可选的响应数据，映射到返回对象的 `data` 字段。</param>
+    /// <param name="requestId">请求标识，映射到返回对象的 `request_id` 字段。</param>
+    /// <param name="statusCode">响应状态码，映射到返回对象的 `status_code` 字段。</param>
+    /// <returns>包含字段 `success`、`message`、`data`、`request_id`、`status_code` 和 `version` 的 JSON 字符串。</returns>
     private string CreateSuccessResponse(string message, object? data = null, long requestId = 0, int statusCode = 200)
     {
         var response = new
@@ -327,7 +368,13 @@ public class NetMQREQServer : IDisposable
     /// <param name="errorMessage">错误消息</param>
     /// <param name="requestId">请求ID</param>
     /// <param name="statusCode">状态码</param>
-    /// <returns>序列化后的错误响应消息</returns>
+    /// <summary>
+    /// 构建一个包含错误信息的标准响应对象并将其序列化为 JSON 字符串。
+    /// </summary>
+    /// <param name="errorMessage">用于 response 中的错误描述。</param>
+    /// <param name="requestId">关联的请求 ID（如无则为 0）。</param>
+    /// <param name="statusCode">HTTP 风格的状态码，表示错误类型，默认 500。</param>
+    /// <returns>序列化后的 JSON 字符串，包含字段：success=false、message、error、request_id、status_code 和 version。</returns>
     private string CreateErrorResponse(string errorMessage, long requestId = 0, int statusCode = 500)
     {
         var response = new
@@ -345,7 +392,12 @@ public class NetMQREQServer : IDisposable
 
     /// <summary>
     /// 释放服务器套接字资源
+    /// <summary>
+    /// 以线程安全的方式释放并清除当前活动的响应套接字（如果存在）。
     /// </summary>
+    /// <remarks>
+    /// 使用原子交换将内部套接字引用设置为 null，并在存在时调用其 Dispose。释放过程中捕获并记录异常但不会重新抛出它们。
+    /// </remarks>
     private void DisposeSocket()
     {
         var socket = Interlocked.Exchange(ref _serverSocket, null);
@@ -364,6 +416,9 @@ public class NetMQREQServer : IDisposable
 
     /// <summary>
     /// 释放 <see cref="NetMQREQServer"/> 类的所有资源
+    /// <summary>
+    /// 释放服务器并清理运行时资源：停止后台服务器线程、标记对象为已释放并释放线程退出事件句柄。
+    /// 此方法可安全多次调用，后续调用无任何效果。
     /// </summary>
     public void Dispose()
     {

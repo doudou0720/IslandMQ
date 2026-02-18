@@ -14,7 +14,10 @@ public static class JsonParser0
     /// 递归获取所有验证错误
     /// </summary>
     /// <param name="results">验证结果</param>
-    /// <returns>错误消息列表</returns>
+    /// <summary>
+    /// 递归收集给定 Validation `EvaluationResults` 树中所有错误消息，格式为 "key: value"。
+    /// </summary>
+    /// <returns>按出现顺序产生的错误消息序列，每项形如 "键: 值"。</returns>
     private static IEnumerable<string> AllErrors(EvaluationResults results)
     {
         if (results.Errors != null)
@@ -40,7 +43,11 @@ public static class JsonParser0
     /// 解析版本 0 的 JSON 元素
     /// </summary>
     /// <param name="rootElement">根 JSON 元素</param>
-    /// <returns>解析结果</returns>
+    /// <summary>
+    /// 将顶层 JsonElement 按版本 0 的约定解析并验证。
+    /// </summary>
+    /// <param name="rootElement">要解析的顶层 JSON 元素（应包含 "version" 和 "command" 等字段）。</param>
+    /// <returns>包含解析结果的 JsonParseResult：当解析成功时 Success 为 true，ParsedData 为原始根元素且 Version 为 0；失败时 Success 为 false，ErrorMessage 包含失败原因。</returns>
     public static JsonParseResult Parse(JsonElement rootElement)
     {
         try

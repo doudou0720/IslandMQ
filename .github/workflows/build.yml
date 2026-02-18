@@ -2,7 +2,9 @@ name: Build and Publish
 
 on:
   push:
-    branches: [ main, publish ]
+    branches: [main, publish]
+  merge_group:
+    branches: [main, publish]
   workflow_dispatch:
 
 jobs:
@@ -31,7 +33,7 @@ jobs:
     - name: Attest build provenance
       uses: actions/attest-build-provenance@v1
       with:
-        subject-path: './cipx/*'
+        subject-path: './cipx/*.cipx'
 
 
     - name: Upload artifact

@@ -1,11 +1,33 @@
 using System.Text.Json;
 using System.Linq;
+using System.Collections.Generic;
 using Json.Schema;
 
 namespace IslandMQ.Utils;
 
 public class JsonParser0
 {
+    private static IEnumerable<string> AllErrors(EvaluationResults results)
+    {
+        if (results.Errors != null)
+        {
+            foreach (var error in results.Errors)
+            {
+                yield return $"{error.Key}: {error.Value}";
+            }
+        }
+        if (results.Details != null)
+        {
+            foreach (var detail in results.Details)
+            {
+                foreach (var error in AllErrors(detail))
+                {
+                    yield return error;
+                }
+            }
+        }
+    }
+    
     public static JsonParseResult Parse(string jsonString)
     {
         try
@@ -51,15 +73,8 @@ public class JsonParser0
             if (!validationResult.IsValid)
             {
                 // 构建错误信息
-                string errorMessage = "Validation failed: ";
-                if (validationResult.Errors != null)
-                {
-                    errorMessage += string.Join("; ", validationResult.Errors.Select(e => $"{e.Key}: {e.Value}"));
-                }
-                else
-                {
-                    errorMessage += "Unknown validation error";
-                }
+                var allErrors = AllErrors(validationResult).ToList();
+                string errorMessage = "Validation failed: " + (allErrors.Any() ? string.Join("; ", allErrors) : "Unknown validation error");
                 
                 return new JsonParseResult
                 {

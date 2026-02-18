@@ -26,12 +26,12 @@ public class IslandMQNotificationProvider : NotificationProviderBase
         {
             _logger?.LogDebug("Showing notification - mask title: {Title}, overlay message: {Message}", e.Title, e.Message);
             
-            double ClampDuration(double duration, double min = 0.1, double max = 3600.0)
+            double ClampDuration(double duration, double min = 0.0, double max = 3600.0)
             {
                 if (!double.IsFinite(duration))
                 {
                     _logger?.LogWarning("Invalid duration value: {Duration}, using default", duration);
-                    return min;
+                    return Math.Max(min, 0.1);
                 }
                 if (duration < min)
                 {
@@ -46,19 +46,22 @@ public class IslandMQNotificationProvider : NotificationProviderBase
                 return duration;
             }
             
-            double safeMaskDuration = ClampDuration(e.MaskDuration);
-            double safeOverlayDuration = ClampDuration(e.OverlayDuration);
+            double safeMaskDuration = ClampDuration(e.MaskDuration, min: 0.1);
+            double safeOverlayDuration = ClampDuration(e.OverlayDuration, min: 0.0);
             
             var mask = NotificationContent.CreateTwoIconsMask(e.Title);
             mask.Duration = TimeSpan.FromSeconds(safeMaskDuration);
             
             var notice = new NotificationRequest
             {
-                MaskContent = mask,
-                OverlayContent = NotificationContent.CreateSimpleTextContent(e.Message)
+                MaskContent = mask
             };
             
-            notice.OverlayContent.Duration = TimeSpan.FromSeconds(safeOverlayDuration);
+            if (safeOverlayDuration > 0.0)
+            {
+                notice.OverlayContent = NotificationContent.CreateSimpleTextContent(e.Message);
+                notice.OverlayContent.Duration = TimeSpan.FromSeconds(safeOverlayDuration);
+            }
             
             ShowNotification(notice);
         });

@@ -70,12 +70,10 @@ public class NetMQPUBTaskQueue : IDisposable
         }
     }
 
-    public void Stop()
+    private void StopInternal()
     {
-        CheckDisposed();
         lock (_threadLock)
         {
-            CheckDisposed();
             _isRunning = false;
             if (_processingThread != null)
                 {
@@ -103,6 +101,12 @@ public class NetMQPUBTaskQueue : IDisposable
                     _processingThread = null;
                 }
         }
+    }
+    
+    public void Stop()
+    {
+        CheckDisposed();
+        StopInternal();
     }
 
     private void ProcessQueue()
@@ -187,13 +191,17 @@ public class NetMQPUBTaskQueue : IDisposable
             {
                 return;
             }
-            _disposed = true;
         }
         
-        Stop();
+        StopInternal();
         
         lock (_disposeLock)
         {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
             _threadExitEvent.Dispose();
         }
         

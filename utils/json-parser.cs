@@ -1,9 +1,18 @@
 using System.Text.Json;
+using System.Threading;
 
 namespace IslandMQ.Utils;
 
 public class JsonParser
 {
+    private static bool IsFatal(Exception ex)
+    {
+        return ex is OutOfMemoryException ||
+               ex is StackOverflowException ||
+               ex is AccessViolationException ||
+               ex is ThreadAbortException;
+    }
+    
     public const int MIN_SUPPORTED_VERSION = 0;
     public const int MAX_SUPPORTED_VERSION = 0;
     
@@ -71,6 +80,10 @@ public class JsonParser
         }
         catch (Exception ex)
         {
+            if (IsFatal(ex))
+            {
+                throw;
+            }
             return new JsonParseResult
             {
                 Success = false,

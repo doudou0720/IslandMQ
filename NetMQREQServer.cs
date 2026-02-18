@@ -89,12 +89,10 @@ public class NetMQREQServer : IDisposable
         }
     }
 
-    public void Stop()
+    private void StopInternal()
     {
-        CheckDisposed();
         lock (_threadLock)
         {
-            CheckDisposed();
             _isRunning = false;
             if (_serverThread != null)
             {
@@ -130,6 +128,12 @@ public class NetMQREQServer : IDisposable
                 _serverThread = null;
             }
         }
+    }
+    
+    public void Stop()
+    {
+        CheckDisposed();
+        StopInternal();
     }
 
     private void RunServer()
@@ -281,13 +285,17 @@ public class NetMQREQServer : IDisposable
             {
                 return;
             }
-            _disposed = true;
         }
         
-        Stop();
+        StopInternal();
         
         lock (_disposeLock)
         {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
             _threadExitEvent.Dispose();
         }
         

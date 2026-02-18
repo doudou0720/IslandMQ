@@ -49,26 +49,42 @@ def send_request(context, holder, payload):
 
 
 def run_tests(context, holder):
+    failures = []
+    
+    def check_test(name, success_expected=True):
+        def decorator(func):
+            result = func()
+            if result != success_expected:
+                failures.append(name)
+            return result
+        return decorator
+    
     print("\n=== Test 1: ping command ===")
     ping_request = {
         "version": 0,
         "command": "ping"
     }
-    send_request(context, holder, ping_request)
+    ok, resp = send_request(context, holder, ping_request)
+    if not (ok and resp.get("success")):
+        failures.append("Test 1: ping command")
 
     print("\n=== Test 2: non-existent command ===")
     invalid_request = {
         "version": 0,
         "command": "nonexistentcommand"
     }
-    send_request(context, holder, invalid_request)
+    ok, resp = send_request(context, holder, invalid_request)
+    if not (ok and not resp.get("success")):
+        failures.append("Test 2: non-existent command")
 
     print("\n=== Test 3: request without command ===")
     no_command_request = {
         "version": 0,
         "message": "Test without command"
     }
-    send_request(context, holder, no_command_request)
+    ok, resp = send_request(context, holder, no_command_request)
+    if not (ok and not resp.get("success")):
+        failures.append("Test 3: request without command")
 
     print("\n=== Test 4: notice command with all parameters ===")
     notice_request_full = {
@@ -76,7 +92,9 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["测试提醒", "--context=这是一条测试提醒消息", "--allow-break=true"]
     }
-    send_request(context, holder, notice_request_full)
+    ok, resp = send_request(context, holder, notice_request_full)
+    if not (ok and resp.get("success")):
+        failures.append("Test 4: notice command with all parameters")
 
     print("\n=== Test 5: notice command with minimal parameters ===")
     notice_request_minimal = {
@@ -84,7 +102,9 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["简单提醒"]
     }
-    send_request(context, holder, notice_request_minimal)
+    ok, resp = send_request(context, holder, notice_request_minimal)
+    if not (ok and resp.get("success")):
+        failures.append("Test 5: notice command with minimal parameters")
 
     print("\n=== Test 6: notice command with allow-break=false ===")
     notice_request_no_break = {
@@ -92,7 +112,9 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["测试提醒", "--allow-break=false"]
     }
-    send_request(context, holder, notice_request_no_break)
+    ok, resp = send_request(context, holder, notice_request_no_break)
+    if not (ok and resp.get("success")):
+        failures.append("Test 6: notice command with allow-break=false")
 
     print("\n=== Test 7: notice command without title ===")
     notice_request_no_title = {
@@ -100,7 +122,9 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["--context=缺少标题的提醒"]
     }
-    send_request(context, holder, notice_request_no_title)
+    ok, resp = send_request(context, holder, notice_request_no_title)
+    if not (ok and resp.get("success")):
+        failures.append("Test 7: notice command without title")
 
     print("\n=== Test 8: notice command with custom mask duration ===")
     notice_request_custom_mask_duration = {
@@ -108,7 +132,9 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["自定义提醒", "--context=这是一条自定义mask持续时间的提醒", "--mask-duration=2.0"]
     }
-    send_request(context, holder, notice_request_custom_mask_duration)
+    ok, resp = send_request(context, holder, notice_request_custom_mask_duration)
+    if not (ok and resp.get("success")):
+        failures.append("Test 8: notice command with custom mask duration")
 
     print("\n=== Test 9: notice command with custom both durations ===")
     notice_request_custom_both_durations = {
@@ -116,35 +142,54 @@ def run_tests(context, holder):
         "command": "notice",
         "args": ["自定义提醒", "--context=这是一条自定义both持续时间的提醒", "--mask-duration=1.5", "--overlay-duration=20.0"]
     }
-    send_request(context, holder, notice_request_custom_both_durations)
+    ok, resp = send_request(context, holder, notice_request_custom_both_durations)
+    if not (ok and resp.get("success")):
+        failures.append("Test 9: notice command with custom both durations")
 
     print("\n=== Test 10: notice command without args ===")
     notice_request_no_args = {
         "version": 0,
         "command": "notice"
     }
-    send_request(context, holder, notice_request_no_args)
+    ok, resp = send_request(context, holder, notice_request_no_args)
+    if not (ok and not resp.get("success")):
+        failures.append("Test 10: notice command without args")
 
     print("\n=== Test 11: invalid version ===")
     invalid_version_request = {
         "version": 1,
         "command": "ping"
     }
-    send_request(context, holder, invalid_version_request)
+    ok, resp = send_request(context, holder, invalid_version_request)
+    if not (ok and not resp.get("success")):
+        failures.append("Test 11: invalid version")
 
     print("\n=== Test 12: time command ====")
     time_request = {
         "version": 0,
         "command": "time"
     }
-    send_request(context, holder, time_request)
+    ok, resp = send_request(context, holder, time_request)
+    if not (ok and resp.get("success")):
+        failures.append("Test 12: time command")
 
     print("\n=== Test 13: get_lesson command ====")
     get_lesson_request = {
         "version": 0,
         "command": "get_lesson"
     }
-    send_request(context, holder, get_lesson_request)
+    ok, resp = send_request(context, holder, get_lesson_request)
+    if not (ok and resp.get("success")):
+        failures.append("Test 13: get_lesson command")
+
+    # Print final summary
+    print("\n=== Test Summary ===")
+    if not failures:
+        print("All tests passed!")
+    else:
+        print(f"Failed tests ({len(failures)}):")
+        for failure in failures:
+            print(f"  - {failure}")
 
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):

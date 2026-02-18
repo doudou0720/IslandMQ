@@ -4,34 +4,31 @@ namespace IslandMQ.Utils;
 
 public static class JsonSchemaDefinitions
 {
-    private static JsonSchemaBuilder AddBaseProperties(this JsonSchemaBuilder builder)
-    {
-        return builder
-            .Type(SchemaValueType.Object)
-            .Required("version", "command")
-            .Properties(
-                ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0))
-            );
-    }
-
     // 基础请求Schema
     public static readonly JsonSchema BaseRequestSchema = new JsonSchemaBuilder()
-        .AddBaseProperties()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command")
+        .Properties(
+            ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0))
+        )
         .Build();
 
     // Ping请求Schema
     public static readonly JsonSchema PingRequestSchema = new JsonSchemaBuilder()
-        .AddBaseProperties()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command")
         .Properties(
+            ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0)),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("ping"))
         )
         .Build();
 
     // Notice请求Schema
     public static readonly JsonSchema NoticeRequestSchema = new JsonSchemaBuilder()
-        .AddBaseProperties()
-        .Required("args")
+        .Type(SchemaValueType.Object)
+        .Required("version", "command", "args")
         .Properties(
+            ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0)),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("notice")),
             ("args", new JsonSchemaBuilder()
                 .Type(SchemaValueType.Array)
@@ -43,16 +40,20 @@ public static class JsonSchemaDefinitions
 
     // Time请求Schema
     public static readonly JsonSchema TimeRequestSchema = new JsonSchemaBuilder()
-        .AddBaseProperties()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command")
         .Properties(
+            ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0)),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("time"))
         )
         .Build();
 
     // GetLesson请求Schema
     public static readonly JsonSchema GetLessonRequestSchema = new JsonSchemaBuilder()
-        .AddBaseProperties()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command")
         .Properties(
+            ("version", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0).Maximum(0)),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("get_lesson"))
         )
         .Build();

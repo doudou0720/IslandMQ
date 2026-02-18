@@ -13,28 +13,36 @@ context = zmq.Context()
 socket = None
 
 subscribed = False
+_cleaned_up = False
 
 # 清理函数
-def cleanup(signum=None, frame=None):
+def cleanup(signum=None, frame=None, exit_on_completion=False):
+    global _cleaned_up, socket, context
+    if _cleaned_up:
+        return
     logger.info("Shutting down subscriber...")
     if socket is not None:
         try:
             socket.close()
+            socket = None
         except Exception as e:
             logger.error(f"Error closing socket during cleanup: {e}")
     try:
         context.term()
     except Exception as e:
         logger.error(f"Error terminating context during cleanup: {e}")
-    sys.exit(0)
+    _cleaned_up = True
+    if exit_on_completion:
+        sys.exit(0)
 
 # 注册信号处理
-signal.signal(signal.SIGINT, cleanup)
-signal.signal(signal.SIGTERM, cleanup)
+signal.signal(signal.SIGINT, lambda s, f: cleanup(s, f, exit_on_completion=True))
+signal.signal(signal.SIGTERM, lambda s, f: cleanup(s, f, exit_on_completion=True))
 
 try:
     # 创建订阅套接字
     socket = context.socket(zmq.SUB)
+    socket.setsockopt(zmq.RCVTIMEO, 1000)  # 1秒超时
     socket.connect("tcp://localhost:5556")
     
     # 订阅所有消息（空字符串表示订阅所有主题）

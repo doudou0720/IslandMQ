@@ -13,12 +13,23 @@ public class IslandMQNotificationProvider : NotificationProviderBase
 {
     private readonly ILogger<IslandMQNotificationProvider>? _logger;
 
+    /// <summary>
+    /// 初始化 IslandMQNotificationProvider 实例并开始监听来自 ClassIsland 的通知事件。
+    /// </summary>
+    /// <remarks>
+    /// 可选地接受一个日志记录器并将其保存在实例中，然后订阅 ClassIslandAPIHelper.NotificationRequested 以响应传入的通知请求。
+    /// </remarks>
     public IslandMQNotificationProvider(ILogger<IslandMQNotificationProvider>? logger = null)
     {
         _logger = logger;
         ClassIslandAPIHelper.NotificationRequested += OnNotificationRequested;
     }
 
+    /// <summary>
+    /// 处理 NotificationRequested 事件，在 Avalonia UI 线程上显示通知：创建一个基于事件标题的遮罩（mask）并根据事件提供的时长校验后设置其持续时间，必要时还会添加一个显示事件消息的覆盖层（overlay）。
+    /// </summary>
+    /// <param name="sender">事件的触发者，可能为 null。</param>
+    /// <param name="e">包含通知数据的 <see cref="NotificationEventArgs"/>，其字段包括 Title（通知标题）、Message（覆盖层文本）、MaskDuration（遮罩持续时间，单位秒）和 OverlayDuration（覆盖层持续时间，单位秒）。时长会被限制到合理范围；当 OverlayDuration 小于或等于 0 时不会创建覆盖层。</param>
     private void OnNotificationRequested(object? sender, NotificationEventArgs e)
     {
         _logger?.LogDebug("OnNotificationRequested - e.Title: {Title}, e.Message: {Message}, e.MaskDuration: {MaskDuration}, e.OverlayDuration: {OverlayDuration}", e.Title, e.Message, e.MaskDuration, e.OverlayDuration);

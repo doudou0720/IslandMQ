@@ -23,7 +23,14 @@ public static class ClassIslandAPIHelper
     /// 处理API请求的方法
     /// </summary>
     /// <param name="parsedData">解析后的数据</param>
-    /// <returns>处理结果</returns>
+    /// <summary>
+    /// 根据传入的已解析 JSON 指令分派并执行相应的处理逻辑。
+    /// </summary>
+    /// <remarks>
+    /// 支持的命令包括 "ping"、"notice"、"time" 和 "get_lesson"；若命令缺失或不受支持，将返回相应的错误结果。
+    /// </remarks>
+    /// <param name="parsedData">包含至少 "command" 字段的已解析 JSON 元素，以及命令所需的其他参数（例如 "args"）。</param>
+    /// <returns>包含 HTTP 风格状态码、描述性消息及可选负载的 ApiHelperResult；错误情况通过相应的状态码和消息反映。</returns>
     public static ApiHelperResult ProcessRequest(JsonElement parsedData)
     {
         // 解析command字段
@@ -63,7 +70,12 @@ public static class ClassIslandAPIHelper
     /// </summary>
     /// <param name="statusCode">状态码</param>
     /// <param name="message">错误消息</param>
-    /// <returns>ApiHelperResult实例</returns>
+    /// <summary>
+    /// 构建一个包含指定状态码和消息的错误响应对象。
+    /// </summary>
+    /// <param name="statusCode">用于表示错误类型的状态码（例如 HTTP 风格的状态码或应用级错误码）。</param>
+    /// <param name="message">描述错误的消息文本，作为响应中返回的说明。</param>
+    /// <returns>包含指定状态码和消息的 ApiHelperResult 实例。</returns>
     private static ApiHelperResult BuildErrorResult(int statusCode, string message)
     {
         return new ApiHelperResult
@@ -76,7 +88,10 @@ public static class ClassIslandAPIHelper
     /// <summary>
     /// ping函数，直接返回OK
     /// </summary>
-    /// <returns>处理结果</returns>
+    /// <summary>
+    /// 检查服务可用性并返回简单的确认响应。
+    /// </summary>
+    /// <returns>ApiHelperResult，StatusCode 为 200，Message 为 "OK".</returns>
     public static ApiHelperResult Ping()
     {
         // 直接完成，返回200 OK
@@ -90,7 +105,15 @@ public static class ClassIslandAPIHelper
     /// <summary>
     /// time函数，返回精确时间与系统时间的差值
     /// </summary>
-    /// <returns>处理结果</returns>
+    /// <summary>
+    /// 计算系统时间与精确时间服务返回的本地当前时间之间的差值（以毫秒为单位）。
+    /// </summary>
+    /// <remarks>
+    /// 若找不到 IExactTimeService 或在获取时间过程中发生异常，方法会返回表示内部服务器错误的结果（状态码 500）。
+    /// </remarks>
+    /// <returns>
+    /// 一个 ApiHelperResult；成功时 StatusCode 为 200，Message 为时间差的毫秒数（以不变文化格式的字符串）；失败时返回 StatusCode 为 500 的错误结果。
+    /// </returns>
     public static ApiHelperResult Time()
     {
         try
@@ -123,7 +146,12 @@ public static class ClassIslandAPIHelper
     /// notice函数，显示提醒
     /// </summary>
     /// <param name="parsedData">解析后的数据</param>
-    /// <returns>处理结果</returns>
+    /// <summary>
+    /// 根据传入的 args 参数触发用户通知并返回处理结果。
+    /// </summary>
+    /// <param name="parsedData">包含命令参数的 JSON 对象，期望包含 "args" 字段（字符串数组）。支持的参数形式：
+    /// --context=&lt;message&gt;（通知内容）、--allow-break=&lt;true|false&gt;、--mask-duration=&lt;秒数&gt;、--overlay-duration=&lt;秒数&gt;，以及第一个不以 `--` 开头的项作为标题。</param>
+    /// <returns>表示处理结果的 ApiHelperResult。StatusCode 可能为 200（已发送且允许中断）、202（已发送但不允许中断）、400（缺少 title）或 503（发送失败）；Message 包含相应的描述。</returns>
     public static ApiHelperResult Notice(JsonElement parsedData)
     {
         // 解析参数
@@ -238,7 +266,10 @@ public static class ClassIslandAPIHelper
     /// <summary>
     /// get_lesson函数，返回序列化的LessonsService数据
     /// </summary>
-    /// <returns>处理结果</returns>
+    /// <summary>
+    /// 获取当前课表及其运行时状态并将这些信息封装为 API 响应。
+    /// </summary>
+    /// <returns>ApiHelperResult：成功时（状态码 200）其 Data 字段包含课表相关的聚合对象（当前科目、下节课科目、当前状态、时间布局项、课表信息、剩余时间等）；失败时返回包含错误消息和相应状态码（通常为 500）的结果。</returns>
     public static ApiHelperResult GetLesson()
     {
         try

@@ -20,6 +20,16 @@ class SocketHolder:
 
 
 def create_socket(context, server_address=SERVER_ADDRESS):
+    """
+    创建并返回一个已连接的 REQ 类型 ZeroMQ 套接字，且设置了接收超时与立即关闭行为。
+    
+    Parameters:
+    	context (zmq.Context): ZeroMQ 上下文，用于创建套接字。
+    	server_address (str): 要连接的服务器地址，例如 "tcp://localhost:5555"（默认为模块常量 SERVER_ADDRESS）。
+    
+    Returns:
+    	zmq.Socket: 一个已连接的 REQ 套接字，带有接收超时（RCVTIMEO=5000 ms）和挂起关闭时间为 0（LINGER=0）。
+    """
     socket = context.socket(zmq.REQ)
     socket.setsockopt(zmq.RCVTIMEO, 5000)
     socket.setsockopt(zmq.LINGER, 0)
@@ -28,6 +38,19 @@ def create_socket(context, server_address=SERVER_ADDRESS):
 
 
 def send_request(context, holder, payload):
+    """
+    发送 JSON 序列化的请求并等待解析后的 JSON 响应。
+    
+    Parameters:
+        context (zmq.Context): ZeroMQ 上下文，用于在发生超时后重建 socket。
+        holder (SocketHolder): 包含当前 zmq.Socket 的容器；在超时情况下会替换为新 socket。
+        payload (Any): 将被序列化为 JSON 并发送的有效负载。
+    
+    Returns:
+        tuple:
+            ok (bool): `True` 表示成功接收到并解析了响应，`False` 表示发生超时或解析错误。
+            resp (Any): 当 `ok` 为 `True` 时为解析后的 JSON 响应对象；当 `ok` 为 `False` 时为错误标识字符串，可能为 `"timeout"` 或 `"json_error: <error message>"`。
+    """
     socket = holder.socket
     json_request = json.dumps(payload, ensure_ascii=False)
     print(f"Sending request: {json_request}")
@@ -49,6 +72,15 @@ def send_request(context, holder, payload):
 
 
 def run_tests(context, holder):
+    """
+    运行一系列预定义的请求测试并在终端打印每项结果与最终汇总。
+    
+    依次发送 13 个测试请求（ping、无效命令、缺少字段、若干 notice 场景、time、get_lesson 等），根据每次响应的 success 字段判断测试通过与否，收集失败项并在结束时打印通过或失败的汇总。
+    
+    Parameters:
+        context (zmq.Context): 用于发送请求的 ZeroMQ 上下文。
+        holder (SocketHolder): 包含用于通信的 socket 的容器。
+    """
     failures = []
     
     print("\n=== Test 1: ping command ===")
@@ -185,6 +217,19 @@ def run_tests(context, holder):
 
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):
+    """
+    向服务器发送一条带可选参数的通知（命令为 "notice"）。
+    
+    参数:
+        title (str): 通知的主标题。
+        context_text (str): 可选的上下文文本；为空时不包含该参数。
+        allow_break (bool): 指示是否允许打断的布尔值，会被序列化为 "true"/"false" 形式的参数。
+        mask_duration (float | None): 可选的遮罩持续时间（数值）；为 None 时不包含该参数。
+        overlay_duration (float | None): 可选的叠加持续时间（数值）；为 None 时不包含该参数。
+    
+    说明:
+        此函数构建并发送一个包含 version=0、command="notice" 和按规则组装的 args 列表的请求到默认/新建的 ZeroMQ 连接。函数在完成后会关闭其使用的套接字和上下文。
+    """
     ctx = zmq.Context()
     holder = SocketHolder(create_socket(ctx))
     try:
@@ -209,6 +254,17 @@ def send_notice(title, context_text, allow_break, mask_duration, overlay_duratio
 
 
 def run_request_with_socket(payload):
+    """
+    使用新创建的 ZeroMQ 上下文和请求套接字发送单次请求并返回处理结果。确保在返回前关闭套接字和终止上下文。
+    
+    Parameters:
+        payload: 要发送的有效负载，会被序列化为 JSON 并通过 REQ 套接字发送。
+    
+    Returns:
+        tuple(success, response): 
+            - `success` 为 `True` 表示接收到并成功解析了 JSON 响应；为 `False` 表示发生错误。
+            - `response` 在成功时为解析后的 JSON 对象；在失败时为错误标识字符串，例如 `"timeout"` 或 `"json_error: <error>"`。
+    """
     ctx = zmq.Context()
     holder = SocketHolder(create_socket(ctx))
     try:

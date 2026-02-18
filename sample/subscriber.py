@@ -17,6 +17,19 @@ _cleaned_up = False
 
 # 清理函数
 def cleanup(signum=None, frame=None, *, exit_on_completion=False):
+    """
+    执行模块级资源的清理：关闭订阅 socket，终止 ZeroMQ 上下文，并可选择在完成后退出进程。
+    
+    Parameters:
+    	signum (int | None): 触发清理的信号编号（可为 None），用于 signal 处理器回调上下文。
+    	frame (types.FrameType | None): 信号处理时传入的当前堆栈帧（可为 None），仅作为回调签名的一部分。
+    	exit_on_completion (bool): 若为 True，清理完成后以状态码 0 终止进程。
+    
+    Behaviour:
+    	- 本函数可安全重复调用；若已完成清理则立即返回。
+    	- 关闭全局订阅 socket（若存在）并终止全局 ZeroMQ 上下文。
+    	- 在 exit_on_completion 为 True 时调用 sys.exit(0) 结束进程。
+    """
     global _cleaned_up, socket, context
     if _cleaned_up:
         return

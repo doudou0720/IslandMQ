@@ -11,7 +11,11 @@ public static class ExceptionHelper
     /// 检查异常是否为致命异常
     /// </summary>
     /// <param name="ex">要检查的异常</param>
-    /// <returns>如果异常是致命的则返回 true，否则返回 false</returns>
+    /// <summary>
+    /// 判断给定异常是否属于致命异常（即通常会导致进程或线程无法继续运行的异常）。
+    /// </summary>
+    /// <param name="ex">要检查的异常实例。</param>
+    /// <returns>`true` 如果异常是 OutOfMemoryException、StackOverflowException、AccessViolationException 或 ThreadAbortException 之一，`false` 否则。</returns>
     public static bool IsFatal(Exception ex)
     {
         return ex is OutOfMemoryException ||

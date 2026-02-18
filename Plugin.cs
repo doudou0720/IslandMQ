@@ -27,10 +27,6 @@ public class Plugin : PluginBase
     private ILogger<IslandMQ.Plugin>? _logger;
 
     /// <summary>
-    /// 初始化插件
-    /// </summary>
-    /// <param name="context">主机构建器上下文</param>
-    /// <summary>
     /// 配置并注册 IslandMQ 插件所需的服务，并在应用启动和停止时初始化/停止 NetMQ 服务器并注册/注销课表事件处理器。
     /// </summary>
     /// <param name="context">宿主构建器的上下文，用于访问注册时的环境与配置信息。</param>
@@ -60,8 +56,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 注册课程事件处理器
-    /// <summary>
     /// 订阅 ILessonsService 的课时相关事件并注册相应的处理程序。
     /// </summary>
     /// <remarks>
@@ -82,8 +76,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 取消注册课程事件处理器
-    /// <summary>
     /// 注销已注册的课程事件处理器并将内部 ILessonsService 引用设为 null。
     /// </summary>
     private void UnregisterLessonEvents()
@@ -99,10 +91,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 上课事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
-    /// <summary>
     /// 在课程开始时向 NetMQ PUB 服务器发布 "OnClass" 通知。
     /// </summary>
     /// <param name="sender">触发事件的来源。</param>
@@ -113,10 +101,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 课间休息事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
-    /// <summary>
     /// 在课间时间发生时通过 PUB 服务器发布 "OnBreakingTime" 通知。
     /// </summary>
     /// <remarks>如果 PUB 服务器未注册或不可用，则不会执行任何操作。</remarks>
@@ -126,10 +110,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 放学事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
-    /// <summary>
     /// 将表示放学的通知 "OnAfterSchool" 发布到 NetMQ PUB 服务器。
     /// </summary>
     private void OnAfterSchoolHandler(object? sender, EventArgs e)
@@ -137,10 +117,6 @@ public class Plugin : PluginBase
         _netMqPubServer?.Publish("OnAfterSchool");
     }
 
-    /// <summary>
-    /// 当前时间状态改变事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
     /// <summary>
     /// 在课程时间状态改变时通过已注册的 NetMQ PUB 服务器发布 "CurrentTimeStateChanged" 通知。
     /// </summary>
@@ -152,12 +128,10 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 启动 NetMQ REQ 服务器
-    /// <summary>
     /// 启动 NetMQ REQ 服务器并订阅其错误事件。
     /// </summary>
     /// <remarks>
-    /// 如果无法从依赖注入解析到服务器实例或启动过程中发生异常，将记录错误日志；启动成功后会订阅服务器的 <c>ErrorOccurred</c> 事件并记录成功信息日志。
+    /// 如果无法从依赖注入解析到服务器实例或启动过程中发生异常，将记录错误日志；启动成功后会订阅服务器的 &lt;c&gt;ErrorOccurred&lt;/c&gt; 事件并记录成功信息日志。
     /// </remarks>
     private void StartNetMqReqServer()
     {
@@ -180,8 +154,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 停止 NetMQ REQ 服务器
-    /// <summary>
     /// 停止并释放内部的 NetMQ REQ 服务器（若存在），将其引用置空；在成功或失败时记录相应日志。
     /// </summary>
     private void StopNetMqReqServer()
@@ -202,8 +174,6 @@ public class Plugin : PluginBase
         }
     }
 
-    /// <summary>
-    /// 启动 NetMQ PUB 服务器
     /// <summary>
     /// 启动并注册 NetMQ 的 PUB 服务器实例以开始发布消息。
     /// </summary>
@@ -228,8 +198,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// 停止 NetMQ PUB 服务器
-    /// <summary>
     /// 停止并释放插件持有的 NetMQ PUB 服务器实例（如果存在），并将内部引用置为 null；在释放失败时记录错误信息。
     /// </summary>
     private void StopNetMqPubServer()
@@ -251,10 +219,6 @@ public class Plugin : PluginBase
     }
 
     /// <summary>
-    /// NetMQ REQ 服务器错误事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
-    /// <summary>
     /// 记录并报告 NetMQ REQ 服务器发生的异常。
     /// </summary>
     /// <param name="sender">触发事件的对象，可能为 null。</param>
@@ -264,10 +228,6 @@ public class Plugin : PluginBase
         _logger?.LogError(e, "NetMQ REQ server error: {Message}", e.Message);
     }
 
-    /// <summary>
-    /// NetMQ PUB 服务器错误事件处理器
-    /// </summary>
-    /// <param name="sender">事件发送者</param>
     /// <summary>
     /// 处理来自 NetMQ PUB 服务器的错误事件并记录错误信息。
     /// </summary>

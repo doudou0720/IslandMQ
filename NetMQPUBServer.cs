@@ -42,9 +42,6 @@ public class NetMQPUBServer : IDisposable
     }
 
     /// <summary>
-    /// 检查对象是否已被释放
-    /// </summary>
-    /// <summary>
     /// 在执行操作前验证实例未被释放；如果已释放则抛出异常。
     /// </summary>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出。</exception>
@@ -57,13 +54,10 @@ public class NetMQPUBServer : IDisposable
     }
 
     /// <summary>
-    /// 启动 PUB 服务器
-    /// </summary>
-    /// <summary>
     /// 启动并运行后台 PUB 服务器线程以处理发布操作。
     /// </summary>
     /// <remarks>
-    /// 如果服务器已在运行则立即返回。若检测到先前的服务器线程仍在运行，会等待最多 3 秒以让其退出；若未退出则不会启动新的服务器线程。成功启动后会设置运行标志并创建执行 <c>RunServer</c> 的后台线程。
+    /// 如果服务器已在运行则立即返回。若检测到先前的服务器线程仍在运行，会等待最多 3 秒以让其退出；若未退出则不会启动新的服务器线程。成功启动后会设置运行标志并创建执行 &lt;c&gt;RunServer&lt;/c&gt; 的后台线程。
     /// </remarks>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Start()
@@ -114,8 +108,6 @@ public class NetMQPUBServer : IDisposable
         }
     }
 
-    /// <summary>
-    /// 内部停止服务器的方法
     /// <summary>
     /// 在内部停止发布服务器：将运行标志设为 false，等待后台线程退出，并在必要时强制释放套接字资源后清除线程引用。
     /// </summary>
@@ -178,9 +170,6 @@ public class NetMQPUBServer : IDisposable
     }
     
     /// <summary>
-    /// 停止 PUB 服务器
-    /// </summary>
-    /// <summary>
     /// 停止服务器并等待其优雅退出。
     /// </summary>
     /// <exception cref="ObjectDisposedException">当实例已被释放时抛出。</exception>
@@ -193,12 +182,10 @@ public class NetMQPUBServer : IDisposable
 
 
     /// <summary>
-    /// 服务器运行方法，在单独的线程中执行
-    /// <summary>
     /// 在后台线程上运行 PUB 服务器循环：创建并绑定 PublisherSocket，处理入队消息直到停止。
     /// </summary>
     /// <remarks>
-    /// 在发生非致命异常时通过 <c>ErrorOccurred</c> 事件报告错误。方法返回前会确保套接字被安全释放，并在未处于已释放状态时发出线程退出信号。
+    /// 在发生非致命异常时通过 &lt;c&gt;ErrorOccurred&lt;/c&gt; 事件报告错误。方法返回前会确保套接字被安全释放，并在未处于已释放状态时发出线程退出信号。
     /// </remarks>
     private void RunServer()
     {
@@ -283,15 +270,11 @@ public class NetMQPUBServer : IDisposable
     }
 
     /// <summary>
-    /// 发布消息
-    /// </summary>
-    /// <param name="message">要发布的消息内容</param>
-    /// <summary>
     /// 将消息加入内部任务队列以供后续异步发布。
     /// </summary>
     /// <param name="message">要发布的文本消息，将被放入服务器的发布队列。</param>
     /// <exception cref="ObjectDisposedException">当实例已被释放时抛出。</exception>
-    /// <remarks>若服务器未运行或内部队列未初始化，则不会将消息入队，消息将被忽略（不会抛出异常）。发生内部错误时会通过 <see cref="ErrorOccurred"/> 事件上报。</remarks>
+    /// <remarks>若服务器未运行或内部队列未初始化，则不会将消息入队，消息将被忽略（不会抛出异常）。发生内部错误时会通过 &lt;see cref="ErrorOccurred"/&gt; 事件上报。</remarks>
     public void Publish(string message)
     {
         CheckDisposed();
@@ -315,8 +298,6 @@ public class NetMQPUBServer : IDisposable
     }
 
     /// <summary>
-    /// 释放服务器套接字资源
-    /// <summary>
     /// 原子地将内部发布套接字引用替换为 null，并释放先前的套接字资源（如果存在）。
     /// </summary>
     /// <remarks>
@@ -338,8 +319,6 @@ public class NetMQPUBServer : IDisposable
         }
     }
 
-    /// <summary>
-    /// 释放 <see cref="NetMQPUBServer"/> 类的所有资源
     /// <summary>
     /// 停止服务器（如果正在运行）、释放内部托管资源并将实例标记为已释放；可安全重复调用。
     /// </summary>

@@ -21,14 +21,14 @@ class SocketHolder:
 
 def create_socket(context, server_address=SERVER_ADDRESS):
     """
-    创建并返回一个已连接的 REQ 类型 ZeroMQ 套接字，且设置了接收超时与立即关闭行为。
+    创建并返回一个已连接的 REQ 类型 ZeroMQ 套接字, 且设置了接收超时与立即关闭行为.
     
     Parameters:
-    	context (zmq.Context): ZeroMQ 上下文，用于创建套接字。
-    	server_address (str): 要连接的服务器地址，例如 "tcp://localhost:5555"（默认为模块常量 SERVER_ADDRESS）。
+    	context (zmq.Context): ZeroMQ 上下文, 用于创建套接字.
+    	server_address (str): 要连接的服务器地址, 例如 "tcp://localhost:5555" (默认为模块常量 SERVER_ADDRESS).
     
     Returns:
-    	zmq.Socket: 一个已连接的 REQ 套接字，带有接收超时（RCVTIMEO=5000 ms）和挂起关闭时间为 0（LINGER=0）。
+    	zmq.Socket: 一个已连接的 REQ 套接字, 带有接收超时 (RCVTIMEO=5000 ms) 和挂起关闭时间为 0 (LINGER=0).
     """
     socket = context.socket(zmq.REQ)
     socket.setsockopt(zmq.RCVTIMEO, 5000)
@@ -224,22 +224,22 @@ def run_tests(context, holder):
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):
     """
-    向服务器发送一条带可选参数的通知（命令为 "notice"）。
+    向服务器发送一条带可选参数的通知 (命令为 "notice").
     
     参数:
-        title (str): 通知的主标题。
-        context_text (str): 可选的上下文文本；为空时不包含该参数。
-        allow_break (bool): 指示是否允许打断的布尔值，会被序列化为 "true"/"false" 形式的参数。
-        mask_duration (float | None): 可选的遮罩持续时间（数值）；为 None 时不包含该参数。
-        overlay_duration (float | None): 可选的叠加持续时间（数值）；为 None 时不包含该参数。
+        title (str): 通知的主标题.
+        context_text (str): 可选的上下文文本; 为空时不包含该参数.
+        allow_break (bool): 指示是否允许打断的布尔值, 会被序列化为 "true"/"false" 形式的参数.
+        mask_duration (float | None): 可选的遮罩持续时间 (数值); 为 None 时不包含该参数.
+        overlay_duration (float | None): 可选的叠加持续时间 (数值); 为 None 时不包含该参数.
     
     说明:
-        此函数构建并发送一个包含 version=0、command="notice" 和按规则组装的 args 列表的请求到默认/新建的 ZeroMQ 连接。函数在完成后会关闭其使用的套接字和上下文。
+        此函数构建并发送一个包含 version=0、command="notice" 和按规则组装的 args 列表的请求到默认/新建的 ZeroMQ 连接. 函数在完成后会关闭其使用的套接字和上下文.
     
     Returns:
         tuple:
-            ok (bool): `True` 表示成功发送并收到响应，`False` 表示发生错误。
-            resp (Any): 响应或错误信息。
+            ok (bool): `True` 表示成功发送并收到响应, `False` 表示发生错误.
+            resp (Any): 响应或错误信息.
     """
     ctx = zmq.Context()
     holder = SocketHolder(create_socket(ctx))
@@ -318,16 +318,22 @@ if __name__ == "__main__":
             holder.socket.close()
             context.term()
     elif args.command == "notice":
-        send_notice(args.title, args.context, args.allow_break, args.mask_duration, args.overlay_duration)
+        ok, resp = send_notice(args.title, args.context, args.allow_break, args.mask_duration, args.overlay_duration)
+        if not (ok and resp.get("success")):
+            sys.exit(1)
     elif args.command == "time":
         time_request = {
             "version": 0,
             "command": "time"
         }
-        run_request_with_socket(time_request)
+        ok, resp = run_request_with_socket(time_request)
+        if not (ok and resp.get("success")):
+            sys.exit(1)
     elif args.command == "lesson":
         get_lesson_request = {
             "version": 0,
             "command": "get_lesson"
         }
-        run_request_with_socket(get_lesson_request)
+        ok, resp = run_request_with_socket(get_lesson_request)
+        if not (ok and resp.get("success")):
+            sys.exit(1)

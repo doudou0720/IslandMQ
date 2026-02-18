@@ -119,8 +119,6 @@ public class NetMQREQServer : IDisposable
     }
 
     /// <summary>
-    /// 内部停止服务器的方法
-    /// <summary>
     /// 停止并清理服务器后台线程的内部实现：停止循环标志、等待线程退出并根据超时强制释放套接字，然后清除线程引用。
     /// </summary>
     /// <remarks>
@@ -183,9 +181,6 @@ public class NetMQREQServer : IDisposable
     }
     
     /// <summary>
-    /// 停止 REQ 服务器
-    /// </summary>
-    /// <summary>
     /// 停止正在运行的 NetMQ 响应服务器并等待后台线程安全退出。
     /// </summary>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
@@ -198,12 +193,10 @@ public class NetMQREQServer : IDisposable
 
     
     /// <summary>
-    /// 服务器运行方法，在单独的线程中执行
-    /// <summary>
     /// 在后台线程中运行 NetMQ 响应服务器：绑定到配置的端点，循环接收请求、处理并发送响应，并在结束时释放资源与通知线程退出信号。
     /// </summary>
     /// <remarks>
-    /// 循环期间对外部请求进行接收、生成请求 ID、调用消息处理并将响应发送回客户端；发生非致命异常时触发 <see cref="ErrorOccurred"/> 事件并记录错误，发生致命异常则向上抛出。在退出或发生错误后会处置底层 socket 并设置线程退出事件以通知等待方。
+    /// 循环期间对外部请求进行接收、生成请求 ID、调用消息处理并将响应发送回客户端；发生非致命异常时触发 &lt;see cref="ErrorOccurred"/&gt; 事件并记录错误，发生致命异常则向上抛出。在退出或发生错误后会处置底层 socket 并设置线程退出事件以通知等待方。
     /// </remarks>
     private void RunServer()
     {
@@ -275,11 +268,6 @@ public class NetMQREQServer : IDisposable
     }
 
     /// <summary>
-    /// 处理接收到的消息
-    /// </summary>
-    /// <param name="message">接收到的消息内容</param>
-    /// <param name="requestId">请求ID</param>
-    /// <summary>
     /// 处理接收到的请求消息并生成规范化的 JSON 响应。
     /// </summary>
     /// <param name="message">包含请求的 JSON 字符串。</param>
@@ -325,13 +313,6 @@ public class NetMQREQServer : IDisposable
     }
     
     /// <summary>
-    /// 创建成功响应消息
-    /// </summary>
-    /// <param name="message">响应消息</param>
-    /// <param name="data">响应数据</param>
-    /// <param name="requestId">请求ID</param>
-    /// <param name="statusCode">状态码</param>
-    /// <summary>
     /// 构建并序列化一个表示成功响应的 JSON 字符串。
     /// </summary>
     /// <param name="message">响应的消息文本，映射到返回对象的 `message` 字段。</param>
@@ -355,12 +336,6 @@ public class NetMQREQServer : IDisposable
     }
     
     /// <summary>
-    /// 创建错误响应消息
-    /// </summary>
-    /// <param name="errorMessage">错误消息</param>
-    /// <param name="requestId">请求ID</param>
-    /// <param name="statusCode">状态码</param>
-    /// <summary>
     /// 构建一个包含错误信息的标准响应对象并将其序列化为 JSON 字符串。
     /// </summary>
     /// <param name="errorMessage">用于 response 中的错误描述。</param>
@@ -383,8 +358,6 @@ public class NetMQREQServer : IDisposable
     }
 
     /// <summary>
-    /// 释放服务器套接字资源
-    /// <summary>
     /// 以线程安全的方式释放并清除当前活动的响应套接字（如果存在）。
     /// </summary>
     /// <remarks>
@@ -406,8 +379,6 @@ public class NetMQREQServer : IDisposable
         }
     }
 
-    /// <summary>
-    /// 释放 <see cref="NetMQREQServer"/> 类的所有资源
     /// <summary>
     /// 释放服务器并清理运行时资源：停止后台服务器线程、标记对象为已释放并释放线程退出事件句柄。
     /// 此方法可安全多次调用，后续调用无任何效果。

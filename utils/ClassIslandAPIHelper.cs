@@ -20,10 +20,6 @@ public static class ClassIslandAPIHelper
     public static event EventHandler<NotificationEventArgs>? NotificationRequested;
     
     /// <summary>
-    /// 处理API请求的方法
-    /// </summary>
-    /// <param name="parsedData">解析后的数据</param>
-    /// <summary>
     /// 根据传入的已解析 JSON 指令分派并执行相应的处理逻辑。
     /// </summary>
     /// <remarks>
@@ -66,11 +62,6 @@ public static class ClassIslandAPIHelper
     }
     
     /// <summary>
-    /// 构建错误结果
-    /// </summary>
-    /// <param name="statusCode">状态码</param>
-    /// <param name="message">错误消息</param>
-    /// <summary>
     /// 构建一个包含指定状态码和消息的错误响应对象。
     /// </summary>
     /// <param name="statusCode">用于表示错误类型的状态码（例如 HTTP 风格的状态码或应用级错误码）。</param>
@@ -86,9 +77,6 @@ public static class ClassIslandAPIHelper
     }
     
     /// <summary>
-    /// ping函数，直接返回OK
-    /// </summary>
-    /// <summary>
     /// 检查服务可用性并返回简单的确认响应。
     /// </summary>
     /// <returns>ApiHelperResult，StatusCode 为 200，Message 为 "OK".</returns>
@@ -102,9 +90,6 @@ public static class ClassIslandAPIHelper
         };
     }
     
-    /// <summary>
-    /// time函数，返回精确时间与系统时间的差值
-    /// </summary>
     /// <summary>
     /// 计算系统时间与精确时间服务返回的本地当前时间之间的差值（以毫秒为单位）。
     /// </summary>
@@ -137,15 +122,15 @@ public static class ClassIslandAPIHelper
         }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             _logger?.LogError(ex, "Error getting time difference");
             return BuildErrorResult(500, "Internal server error retrieving time difference");
         }
     }
     
-    /// <summary>
-    /// notice函数，显示提醒
-    /// </summary>
-    /// <param name="parsedData">解析后的数据</param>
     /// <summary>
     /// 根据传入的 args 参数触发用户通知并返回处理结果。
     /// </summary>
@@ -258,14 +243,15 @@ public static class ClassIslandAPIHelper
         }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             _logger?.LogError(ex, "Failed to send notice");
             return BuildErrorResult(503, "Failed to send notice");
         }
     }
 
-    /// <summary>
-    /// get_lesson函数，返回序列化的LessonsService数据
-    /// </summary>
     /// <summary>
     /// 获取当前课表及其运行时状态并将这些信息封装为 API 响应。
     /// </summary>
@@ -307,6 +293,10 @@ public static class ClassIslandAPIHelper
         }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             _logger?.LogError(ex, "Error getting lesson data");
             return BuildErrorResult(500, "Internal server error retrieving lesson data");
         }

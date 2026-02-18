@@ -54,21 +54,22 @@ def send_request(context, holder, payload):
     socket = holder.socket
     json_request = json.dumps(payload, ensure_ascii=False)
     print(f"Sending request: {json_request}")
-    socket.send_string(json_request)
     
     try:
+        socket.send_string(json_request)
         response = socket.recv_string()
         json_response = json.loads(response)
         print(f"Received response: {json.dumps(json_response, indent=2, ensure_ascii=False)}")
-        return (True, json_response)
-    except zmq.Again:
-        print("Request timed out")
+    except zmq.ZMQError as e:
+        print(f"ZMQ error: {e}")
         socket.close()
         holder.socket = create_socket(context)
-        return (False, "timeout")
+        return (False, f"zmq_error: {e}")
     except json.JSONDecodeError as e:
         print(f"Failed to parse response: {e}")
         return (False, f"json_error: {e}")
+    else:
+        return (True, json_response)
 
 
 def run_tests(context, holder):
@@ -80,6 +81,9 @@ def run_tests(context, holder):
     Parameters:
         context (zmq.Context): 用于发送请求的 ZeroMQ 上下文。
         holder (SocketHolder): 包含用于通信的 socket 的容器。
+    
+    Returns:
+        int: The number of failed tests.
     """
     failures = []
     
@@ -214,6 +218,8 @@ def run_tests(context, holder):
         print(f"Failed tests ({len(failures)}):")
         for failure in failures:
             print(f"  - {failure}")
+    
+    return len(failures)
 
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):
@@ -229,6 +235,11 @@ def send_notice(title, context_text, allow_break, mask_duration, overlay_duratio
     
     说明:
         此函数构建并发送一个包含 version=0、command="notice" 和按规则组装的 args 列表的请求到默认/新建的 ZeroMQ 连接。函数在完成后会关闭其使用的套接字和上下文。
+    
+    Returns:
+        tuple:
+            ok (bool): `True` 表示成功发送并收到响应，`False` 表示发生错误。
+            resp (Any): 响应或错误信息。
     """
     ctx = zmq.Context()
     holder = SocketHolder(create_socket(ctx))
@@ -247,7 +258,8 @@ def send_notice(title, context_text, allow_break, mask_duration, overlay_duratio
             "command": "notice",
             "args": args
         }
-        send_request(ctx, holder, notice_request)
+        ok, resp = send_request(ctx, holder, notice_request)
+        return (ok, resp)
     finally:
         holder.socket.close()
         ctx.term()
@@ -299,8 +311,9 @@ if __name__ == "__main__":
         holder = SocketHolder(create_socket(context))
         try:
             print("Client started, sending requests...")
-            run_tests(context, holder)
+            failure_count = run_tests(context, holder)
             print("\nClient finished")
+            sys.exit(failure_count)
         finally:
             holder.socket.close()
             context.term()

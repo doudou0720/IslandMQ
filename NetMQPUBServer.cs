@@ -26,14 +26,11 @@ public class NetMQPUBServer : IDisposable
     private readonly object _threadLock = new object();
     private volatile bool _disposed;
     private readonly object _disposeLock = new object();
-    private NetMQPUBTaskQueue? _taskQueue;
+    private readonly System.Collections.Concurrent.ConcurrentQueue<string> _messageQueue = new();
     
 
     public event EventHandler<Exception>? ErrorOccurred;
 
-    /// <summary>
-    /// 初始化 <see cref="NetMQPUBServer"/> 类的新实例
-    /// </summary>
     /// <summary>
     /// 初始化 NetMQ PUB 服务器实例并设置要绑定的端点。
     /// </summary>
@@ -198,10 +195,10 @@ public class NetMQPUBServer : IDisposable
     /// <summary>
     /// 服务器运行方法，在单独的线程中执行
     /// <summary>
-    /// 在后台线程上运行 PUB 服务器循环：创建并绑定 PublisherSocket，启动发布任务队列并处理入队消息直到停止。
+    /// 在后台线程上运行 PUB 服务器循环：创建并绑定 PublisherSocket，处理入队消息直到停止。
     /// </summary>
     /// <remarks>
-    /// 在发生非致命异常时通过 <c>ErrorOccurred</c> 事件报告错误。方法返回前会确保任务队列和套接字被安全停止与释放，并在未处于已释放状态时发出线程退出信号。
+    /// 在发生非致命异常时通过 <c>ErrorOccurred</c> 事件报告错误。方法返回前会确保套接字被安全释放，并在未处于已释放状态时发出线程退出信号。
     /// </remarks>
     private void RunServer()
     {
@@ -221,12 +218,46 @@ public class NetMQPUBServer : IDisposable
 
             _logger?.LogInformation("NetMQ PUB server started at {Endpoint}", _endpoint);
 
-            _taskQueue = new NetMQPUBTaskQueue(InternalPublish);
-            _taskQueue.Start();
-
             while (_isRunning)
             {
-                Thread.Sleep(100);
+                try
+                {
+                    if (_messageQueue.TryDequeue(out var message))
+                    {
+                        try
+                        {
+                            var socket = Volatile.Read(ref _serverSocket);
+                            if (socket != null && _isRunning)
+                            {
+                                socket.SendFrame(message);
+                                _logger?.LogInformation("Published: {Message}", message);
+                            }
+                            else
+                            {
+                                _logger?.LogWarning("Cannot publish message, server not running.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorOccurred?.Invoke(this, ex);
+                            _logger?.LogError(ex, "Error publishing message: {Message}", ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        Thread.Sleep(10);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ExceptionHelper.IsFatal(ex))
+                    {
+                        throw;
+                    }
+                    ErrorOccurred?.Invoke(this, ex);
+                    _logger?.LogError(ex, "Error: {Message}", ex.Message);
+                    Thread.Sleep(100);
+                }
             }
         }
         catch (Exception ex)
@@ -240,19 +271,6 @@ public class NetMQPUBServer : IDisposable
         }
         finally
         {
-            if (_taskQueue != null)
-            {
-                try
-                {
-                    _taskQueue.Stop();
-                    _taskQueue.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Error disposing task queue: {Message}", ex.Message);
-                }
-                _taskQueue = null;
-            }
             DisposeSocket();
             lock (_disposeLock)
             {
@@ -279,41 +297,10 @@ public class NetMQPUBServer : IDisposable
         CheckDisposed();
         try
         {
-            if (_taskQueue != null && _isRunning)
+            if (_isRunning)
             {
-                _taskQueue.EnqueueMessage(message);
+                _messageQueue.Enqueue(message);
                 _logger?.LogDebug("Message queued for publishing: {Message}", message);
-            }
-            else
-            {
-                _logger?.LogWarning("Cannot publish message, server not running or task queue not initialized.");
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorOccurred?.Invoke(this, ex);
-            _logger?.LogError(ex, "Error queueing message: {Message}", ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// 内部发布消息的方法
-    /// </summary>
-    /// <summary>
-    /// 将指定消息通过当前 PublisherSocket 发送给订阅者（仅当服务器正在运行时）。
-    /// </summary>
-    /// <param name="message">要发布的消息内容。</param>
-    /// <remarks>
-    /// 如果服务器未运行则不会发送消息并会记录警告；发生异常时会触发 <see cref="ErrorOccurred"/> 事件并记录错误。</remarks>
-    private void InternalPublish(string message)
-    {
-        try
-        {
-            var socket = _serverSocket;
-            if (socket != null && _isRunning)
-            {
-                socket.SendFrame(message);
-                _logger?.LogInformation("Published: {Message}", message);
             }
             else
             {
@@ -323,7 +310,7 @@ public class NetMQPUBServer : IDisposable
         catch (Exception ex)
         {
             ErrorOccurred?.Invoke(this, ex);
-            _logger?.LogError(ex, "Error publishing message: {Message}", ex.Message);
+            _logger?.LogError(ex, "Error queueing message: {Message}", ex.Message);
         }
     }
 

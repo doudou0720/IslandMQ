@@ -34,9 +34,6 @@ public class NetMQREQServer : IDisposable
     public event EventHandler<Exception>? ErrorOccurred;
 
     /// <summary>
-    /// 初始化 <see cref="NetMQREQServer"/> 类的新实例
-    /// </summary>
-    /// <summary>
     /// 初始化一个 NetMQ 请求-响应服务器实例，并设置用于绑定的端点地址。
     /// </summary>
     /// <param name="endpoint">要绑定的端点地址，例如 "tcp://127.0.0.1:5555"；默认值为 "tcp://127.0.0.1:5555"。</param>
@@ -46,9 +43,6 @@ public class NetMQREQServer : IDisposable
         _endpoint = endpoint;
     }
     
-    /// <summary>
-    /// 获取下一个请求ID，处理溢出情况
-    /// </summary>
     /// <summary>
     /// 生成并返回下一个唯一的请求标识，确保在并发环境中递增不会冲突。
     /// </summary>
@@ -61,9 +55,6 @@ public class NetMQREQServer : IDisposable
     }
 
     /// <summary>
-    /// 检查对象是否已被释放
-    /// </summary>
-    /// <summary>
     /// 验证当前实例未被释放；如果已释放则抛出异常。
     /// </summary>
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出。</exception>
@@ -75,9 +66,6 @@ public class NetMQREQServer : IDisposable
         }
     }
 
-    /// <summary>
-    /// 启动 REQ 服务器
-    /// </summary>
     /// <summary>
     /// 启动服务器后台线程并开始处理请求；如果服务器已在运行则不做任何操作，并在必要时等待先前线程退出以确保同一时间仅有一个服务器实例运行。
     /// </summary>
@@ -327,6 +315,10 @@ public class NetMQREQServer : IDisposable
         }
         catch (Exception ex)
         {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
             _logger?.LogError(ex, "Error processing message (Request ID: {RequestId}): {Message}", requestId, ex.Message);
             return CreateErrorResponse("Internal server error", requestId);
         }

@@ -19,8 +19,6 @@ public static class ExceptionHelper
     public static bool IsFatal(Exception ex)
     {
         return ex is OutOfMemoryException ||
-               ex is StackOverflowException ||
-               ex is AccessViolationException ||
-               ex is ThreadAbortException;
+               ex is AccessViolationException;
     }
 }

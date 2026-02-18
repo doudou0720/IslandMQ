@@ -169,8 +169,8 @@ public class Plugin : PluginBase
                 _logger?.LogError("Failed to start NetMQ server: NetMQREQService is not available!");
                 return;
             }
-            _netMqReqServer.Start();
             _netMqReqServer.ErrorOccurred += OnNetMqReqServerError;
+            _netMqReqServer.Start();
             _logger?.LogInformation("NetMQ server started successfully!");
         }
         catch (Exception ex)
@@ -190,6 +190,7 @@ public class Plugin : PluginBase
         {
             try
             {
+                _netMqReqServer.ErrorOccurred -= OnNetMqReqServerError;
                 _netMqReqServer.Dispose();
                 _logger?.LogInformation("NetMQ server stopped successfully!");
             }
@@ -216,8 +217,8 @@ public class Plugin : PluginBase
                 _logger?.LogError("Failed to start NetMQ PUB server: NetMQPUBServer is not available!");
                 return;
             }
-            _netMqPubServer.Start();
             _netMqPubServer.ErrorOccurred += OnNetMqPubServerError;
+            _netMqPubServer.Start();
             _logger?.LogInformation("NetMQ PUB server started successfully!");
         }
         catch (Exception ex)
@@ -237,6 +238,7 @@ public class Plugin : PluginBase
         {
             try
             {
+                _netMqPubServer.ErrorOccurred -= OnNetMqPubServerError;
                 _netMqPubServer.Dispose();
                 _logger?.LogInformation("NetMQ PUB server stopped successfully!");
             }

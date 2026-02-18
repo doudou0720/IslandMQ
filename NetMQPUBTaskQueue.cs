@@ -60,15 +60,28 @@ public class NetMQPUBTaskQueue : IDisposable
             if (_processingThread != null && _processingThread.IsAlive)
             {
                 _logger.LogWarning("Previous processing thread still alive, waiting for exit...");
-                bool waited = false;
+                bool isDisposed;
                 lock (_disposeLock)
                 {
-                    if (!_disposed)
+                    isDisposed = _disposed;
+                }
+                bool waited = false;
+                if (!isDisposed)
+                {
+                    try
                     {
                         waited = _threadExitEvent.Wait(3000);
                     }
+                    catch (ObjectDisposedException)
+                    {
+                        waited = true;
+                    }
                 }
-                if (!waited && !_disposed)
+                lock (_disposeLock)
+                {
+                    isDisposed = _disposed;
+                }
+                if (!waited && !isDisposed)
                 {
                     _logger.LogError("Previous thread still running, cannot start new task queue.");
                     return;
@@ -104,15 +117,27 @@ public class NetMQPUBTaskQueue : IDisposable
                 if (_processingThread.IsAlive)
                 {
                     bool eventSignaled = false;
+                    bool isDisposed;
                     lock (_disposeLock)
                     {
-                        if (!_disposed)
+                        isDisposed = _disposed;
+                    }
+                    if (!isDisposed)
+                    {
+                        try
                         {
                             eventSignaled = _threadExitEvent.Wait(2000);
                         }
+                        catch (ObjectDisposedException)
+                        {
+                            eventSignaled = true;
+                        }
                     }
-                    
-                    if (!eventSignaled && !_disposed)
+                    lock (_disposeLock)
+                    {
+                        isDisposed = _disposed;
+                    }
+                    if (!eventSignaled && !isDisposed)
                     {
                         _logger.LogWarning("Task queue thread did not signal exit within 2000ms, forcing join.");
                         if (!_processingThread.Join(5000))

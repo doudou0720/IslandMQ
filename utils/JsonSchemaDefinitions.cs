@@ -8,12 +8,17 @@ namespace IslandMQ.Utils;
 public static class JsonSchemaDefinitions
 {
     /// <summary>
-    /// 版本 0 的模式定义
+    /// 版本 0 的模式定义（用于内部构建其他 schema）
     /// </summary>
-    public static readonly JsonSchemaBuilder VersionZeroSchema = new JsonSchemaBuilder()
+    private static readonly JsonSchemaBuilder VersionZeroSchemaBuilder = new JsonSchemaBuilder()
         .Type(SchemaValueType.Integer)
         .Minimum(0)
         .Maximum(0);
+    
+    /// <summary>
+    /// 版本 0 的模式定义
+    /// </summary>
+    public static readonly JsonSchema VersionZeroSchema = VersionZeroSchemaBuilder.Build();
 
     /// <summary>
     /// 基础请求Schema
@@ -22,7 +27,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Object)
         .Required("version", "command")
         .Properties(
-            ("version", VersionZeroSchema)
+            ("version", VersionZeroSchemaBuilder)
         )
         .Build();
 
@@ -33,7 +38,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Object)
         .Required("version", "command")
         .Properties(
-            ("version", VersionZeroSchema),
+            ("version", VersionZeroSchemaBuilder),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("ping"))
         )
         .Build();
@@ -45,7 +50,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Object)
         .Required("version", "command", "args")
         .Properties(
-            ("version", VersionZeroSchema),
+            ("version", VersionZeroSchemaBuilder),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("notice")),
             ("args", new JsonSchemaBuilder()
                 .Type(SchemaValueType.Array)
@@ -62,7 +67,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Object)
         .Required("version", "command")
         .Properties(
-            ("version", VersionZeroSchema),
+            ("version", VersionZeroSchemaBuilder),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("time"))
         )
         .Build();
@@ -74,7 +79,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Object)
         .Required("version", "command")
         .Properties(
-            ("version", VersionZeroSchema),
+            ("version", VersionZeroSchemaBuilder),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("get_lesson"))
         )
         .Build();
@@ -92,25 +97,12 @@ public static class JsonSchemaDefinitions
     };
 
     /// <summary>
-    /// 根据命令获取相应的Schema
-    /// </summary>
-    /// <param name="command">命令名称</param>
-    /// <summary>
     /// 根据命令名称返回对应的预定义 JSON Schema。
     /// </summary>
     /// <param name="command">命令名称（例如 "ping"、"notice"、"time"、"get_lesson"），大小写须与注册键匹配。</param>
-    /// <returns>对应的 JsonSchema 实例；若命令为 null 或未注册则返回 null。</returns>
+    /// <returns>如果找到对应命令则返回预定义的 JsonSchema，否则返回 null。</returns>
     public static JsonSchema? GetSchemaForCommand(string? command)
     {
-        if (command == null)
-        {
-            return null;
-        }
-        
-        if (SchemaDictionary.TryGetValue(command, out var schema))
-        {
-            return schema;
-        }
-        return null;
+        return command == null ? null : SchemaDictionary.GetValueOrDefault(command);
     }
 }

@@ -41,22 +41,22 @@ public static class ClassIslandAPIHelper
                 : string.Empty;
             
             // 根据command调用相应的函数
-        switch (command)
-        {
-            case "ping":
-                return Ping();
-            case "notice":
-                return Notice(parsedData);
-            case "time":
-                return Time();
-            case "get_lesson":
-                return GetLesson();
-            // 可以在这里添加更多命令
-            // 注意：添加新命令后，需要在 JsonSchemaDefinitions.cs 文件中添加对应的 schema 定义和映射
-            default:
-                // 命令不存在，返回404
-                return BuildErrorResult(404, "Command not found");
-        }
+            switch (command)
+            {
+                case "ping":
+                    return Ping();
+                case "notice":
+                    return Notice(parsedData);
+                case "time":
+                    return Time();
+                case "get_lesson":
+                    return GetLesson();
+                // 可以在这里添加更多命令
+                // 注意：添加新命令后，需要在 JsonSchemaDefinitions.cs 文件中添加对应的 schema 定义和映射
+                default:
+                    // 命令不存在，返回404
+                    return BuildErrorResult(404, "Command not found");
+            }
         }
         else
         {

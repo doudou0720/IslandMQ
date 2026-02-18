@@ -11,12 +11,9 @@ namespace IslandMQ.Utils;
 public static class JsonParser0
 {
     /// <summary>
-    /// 递归获取所有验证错误
-    /// </summary>
-    /// <param name="results">验证结果</param>
-    /// <summary>
     /// 递归收集给定 Validation `EvaluationResults` 树中所有错误消息，格式为 "key: value"。
     /// </summary>
+    /// <param name="results">验证结果</param>
     /// <returns>按出现顺序产生的错误消息序列，每项形如 "键: 值"。</returns>
     private static IEnumerable<string> AllErrors(EvaluationResults results)
     {
@@ -39,10 +36,6 @@ public static class JsonParser0
         }
     }
     
-    /// <summary>
-    /// 解析版本 0 的 JSON 元素
-    /// </summary>
-    /// <param name="rootElement">根 JSON 元素</param>
     /// <summary>
     /// 将顶层 JsonElement 按版本 0 的约定解析并验证。
     /// </summary>
@@ -85,7 +78,11 @@ public static class JsonParser0
                 };
             }
             
-            var validationResult = schema.Evaluate(rootElement);
+            var evaluationOptions = new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            };
+            var validationResult = schema.Evaluate(rootElement, evaluationOptions);
             
             if (!validationResult.IsValid)
             {

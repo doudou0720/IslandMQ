@@ -49,11 +49,21 @@ public static class JsonSchemaDefinitions
         )
         .Build();
 
+    // GetLesson请求Schema
+    public static readonly JsonSchema GetLessonRequestSchema = new JsonSchemaBuilder()
+        .AddBaseProperties()
+        .Properties(
+            ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("get_lesson"))
+        )
+        .Build();
+
     private static readonly System.Collections.Generic.Dictionary<string, JsonSchema?> SchemaDictionary = new()
     {
         { "ping", PingRequestSchema },
         { "notice", NoticeRequestSchema },
-        { "time", TimeRequestSchema }
+        { "time", TimeRequestSchema },
+        { "get_lesson", GetLessonRequestSchema }
+        // 注意：添加新命令后，需要在这里添加对应的 schema 映射
     };
 
     /// <summary>

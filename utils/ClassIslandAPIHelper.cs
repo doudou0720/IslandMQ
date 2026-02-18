@@ -39,7 +39,10 @@ public static class ClassIslandAPIHelper
                 return Notice(parsedData);
             case "time":
                 return Time();
+            case "get_lesson":
+                return GetLesson();
             // 可以在这里添加更多命令
+            // 注意：添加新命令后，需要在 JsonSchemaDefinitions.cs 文件中添加对应的 schema 定义和映射
             default:
                 // 命令不存在，返回404
                 return BuildErrorResult(404, "Command not found");
@@ -223,6 +226,52 @@ public static class ClassIslandAPIHelper
         {
             _logger?.LogError(ex, "Failed to send notice");
             return BuildErrorResult(503, "Failed to send notice");
+        }
+    }
+
+    /// <summary>
+    /// get_lesson函数，返回序列化的LessonsService数据
+    /// </summary>
+    /// <returns>处理结果</returns>
+    public static ApiHelperResult GetLesson()
+    {
+        try
+        {
+            var lessonsService = IAppHost.GetService<ILessonsService>();
+            if (lessonsService == null)
+            {
+                return BuildErrorResult(500, "Internal server error retrieving lessons service");
+            }
+
+            // 创建包含所有需要属性的对象
+            var lessonData = new
+            {
+                CurrentSubject = lessonsService.CurrentSubject,
+                NextClassSubject = lessonsService.NextClassSubject,
+                CurrentState = lessonsService.CurrentState,
+                CurrentTimeLayoutItem = lessonsService.CurrentTimeLayoutItem,
+                CurrentClassPlan = lessonsService.CurrentClassPlan,
+                NextBreakingTimeLayoutItem = lessonsService.NextBreakingTimeLayoutItem,
+                NextClassTimeLayoutItem = lessonsService.NextClassTimeLayoutItem,
+                CurrentSelectedIndex = lessonsService.CurrentSelectedIndex,
+                OnClassLeftTime = lessonsService.OnClassLeftTime,
+                OnBreakingTimeLeftTime = lessonsService.OnBreakingTimeLeftTime,
+                IsClassPlanEnabled = lessonsService.IsClassPlanEnabled,
+                IsClassPlanLoaded = lessonsService.IsClassPlanLoaded,
+                IsLessonConfirmed = lessonsService.IsLessonConfirmed
+            };
+
+            return new ApiHelperResult
+            {
+                StatusCode = 200,
+                Message = "Lesson data retrieved successfully",
+                Data = lessonData
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error getting lesson data");
+            return BuildErrorResult(500, "Internal server error retrieving lesson data");
         }
     }
 }

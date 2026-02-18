@@ -2,6 +2,13 @@ import json
 import zmq
 from dataclasses import dataclass
 import argparse
+import sys
+
+# 设置标准输出为 UTF-8 编码
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr.reconfigure(encoding='utf-8')
 
 
 SERVER_ADDRESS = "tcp://localhost:5555"
@@ -125,12 +132,19 @@ def run_tests(context, holder):
     }
     send_request(context, holder, invalid_version_request)
 
-    print("\n=== Test 12: time command ===")
+    print("\n=== Test 12: time command ====")
     time_request = {
         "version": 0,
         "command": "time"
     }
     send_request(context, holder, time_request)
+
+    print("\n=== Test 13: get_lesson command ====")
+    get_lesson_request = {
+        "version": 0,
+        "command": "get_lesson"
+    }
+    send_request(context, holder, get_lesson_request)
 
 
 def send_notice(title, context_text, allow_break, mask_duration, overlay_duration):
@@ -173,6 +187,8 @@ if __name__ == "__main__":
     
     time_parser = subparsers.add_parser("time", help="Get time difference between exact time and system time")
     
+    lesson_parser = subparsers.add_parser("lesson", help="Get lesson information")
+    
     args = parser.parse_args()
     
     if args.command == "test" or args.command is None:
@@ -196,6 +212,18 @@ if __name__ == "__main__":
                 "command": "time"
             }
             send_request(ctx, holder, time_request)
+        finally:
+            holder.socket.close()
+            ctx.term()
+    elif args.command == "lesson":
+        ctx = zmq.Context()
+        holder = SocketHolder(create_socket(ctx))
+        try:
+            get_lesson_request = {
+                "version": 0,
+                "command": "get_lesson"
+            }
+            send_request(ctx, holder, get_lesson_request)
         finally:
             holder.socket.close()
             ctx.term()

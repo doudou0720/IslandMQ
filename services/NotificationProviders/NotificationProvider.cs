@@ -1,5 +1,4 @@
 using Avalonia.Threading;
-using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Services.NotificationProviders;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Models.Notification;

@@ -1,6 +1,3 @@
-using System;
-using ClassIsland.Core.Models.Notification;
-
 namespace IslandMQ.Services.NotificationProviders;
 
 public class NotificationEventArgs : EventArgs

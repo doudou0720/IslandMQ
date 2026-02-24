@@ -62,4 +62,8 @@
 
 2. 多平台兼容性如何？
 
-优先保证 Windows ，其次为 Linux， MacOS不作保证
+优先保证 Windows ，其次为 Linux， MacOS受限不能使用
+
+## 自己有好的程序？
+
+欢迎到Discussions分享区分享你的程序!

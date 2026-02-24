@@ -2,7 +2,6 @@ using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Attributes;
-using ClassIsland.Core.Controls;
 using ClassIsland.Core.Extensions.Registry;
 using ClassIsland.Shared;
 using IslandMQ.Services.NotificationProviders;

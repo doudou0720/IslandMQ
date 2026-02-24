@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - *.*.*.*
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        cache: true
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build and Publish
+      run: dotnet publish -p:CreateCipx=true
+
+    # - name: Install git-cliff
+    #   run: |
+    #     if (!(Get-Command git-cliff -ErrorAction SilentlyContinue)) {
+    #       winget install git-cliff
+    #     }
+
+    # - name: Generate CHANGELOG
+    #   run: git-cliff --tag "${{ github.ref_name }}" --output CHANGELOG.md
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+        
+    - name: Sign release artifacts with sigstore-python
+      uses: sigstore/gh-action-sigstore-python@v3.2.0
+      with:
+        inputs: |
+          ./cipx/IslandMQ.cipx
+        release-signing-artifacts: true
+        upload-signing-artifacts: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create draft release
+      uses: softprops/action-gh-release@v2
+      with:
+        draft: true
+        # body_path: CHANGELOG.md
+        files: './cipx/*'
+        fail_on_unmatched_files: true

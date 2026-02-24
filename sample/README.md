@@ -2,6 +2,8 @@
 
 本示例展示了如何使用 pyzmq 库与 IslandMQ 插件进行通信。
 
+但是理论上，任何支持 ZeroMQ (ZMQ) 语言都可以与 IslandMQ 插件进行通信。
+
 ## 依赖
 
 需要安装 pyzmq 库：

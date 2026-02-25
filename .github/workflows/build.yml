@@ -2,14 +2,14 @@ name: Build and Publish
 
 on:
   push:
-    branches: [main, publish]
+    branches: [publish]
   merge_group:
-    branches: [main, publish]
+    branches: [publish]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write

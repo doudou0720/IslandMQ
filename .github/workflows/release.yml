@@ -38,7 +38,7 @@ jobs:
 
     - name: Setup Python
       uses: actions/setup-python@v5
-        
+
     - name: Sign release artifacts with sigstore-python
       uses: sigstore/gh-action-sigstore-python@v3.2.0
       with:

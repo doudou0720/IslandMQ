@@ -56,3 +56,5 @@ nunit-*.xml
 # IDE Config
 .trae/
 .idea/
+
+cipx/

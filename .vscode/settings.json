@@ -1,0 +1,22 @@
+{
+  "omnisharp.projectLoadTimeout": 60,
+  "omnisharp.enableMsBuildLoadProjectsOnDemand": true,
+  "omnisharp.enableEditorConfigSupport": true,
+  "csharp.suppressDotnetInstallWarning": true,
+  "csharp.suppressDotnetRestoreNotification": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "files.encoding": "utf8",
+  "terminal.integrated.encoding": "utf8",
+  "terminal.external.windowsExec": "cmd.exe",
+  "terminal.integrated.shell.windows": "C:\\Windows\\System32\\cmd.exe",
+  "terminal.integrated.env.windows": {
+    "PYTHONIOENCODING": "UTF-8",
+    "NODE_ENV": "development"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "IslandMQ: ClassIsland 插件",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${env:ClassIsland_DebugBinaryFile}",
+      "args": [
+        "-epp",
+        "${workspaceFolder}/bin/Debug/net8.0"
+      ],
+      "cwd": "${env:ClassIsland_DebugBinaryDirectory}",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "env": {
+        "DOTNET_CLI_UI_LANGUAGE": "zh-CN",
+        "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT": "false",
+        "DOTNET_SYSTEM_TEXT_ENCODING_CODEPAGES_OVERRIDE": "65001"
+      }
+    }
+  ]
+}

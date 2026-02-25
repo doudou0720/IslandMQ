@@ -271,7 +271,7 @@ public static class ClassIslandAPIHelper
             {
                 foreach (var classInfo in currentClassPlan.Classes)
                 {
-                    object subjectInfo = null;
+                    object? subjectInfo = null;
 
                     // 尝试获取Subject信息
                     if (profileService.Profile?.Subjects?.TryGetValue(classInfo.SubjectId, out var subject) == true)

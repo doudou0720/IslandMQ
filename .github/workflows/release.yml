@@ -2,6 +2,9 @@ name: Release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   release:
@@ -53,6 +56,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         draft: true
-        # body_path: CHANGELOG.md
+        body_path: ./cipx/checksums.md
         files: './cipx/*'
         fail_on_unmatched_files: true

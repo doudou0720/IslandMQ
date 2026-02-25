@@ -13,9 +13,9 @@ namespace IslandMQ.Utils;
 public static class ClassIslandAPIHelper
 {
     private static readonly ILogger? _logger = IAppHost.GetService<ILogger<Plugin>>();
-    
+
     public static event EventHandler<NotificationEventArgs>? NotificationRequested;
-    
+
     /// <summary>
     /// 根据传入的已解析 JSON 指令分派并执行相应的处理逻辑。
     /// </summary>
@@ -29,10 +29,10 @@ public static class ClassIslandAPIHelper
         // 解析command字段
         if (parsedData.TryGetProperty("command", out var commandElement))
         {
-            string command = commandElement.ValueKind == JsonValueKind.String 
-                ? commandElement.GetString() ?? string.Empty 
+            string command = commandElement.ValueKind == JsonValueKind.String
+                ? commandElement.GetString() ?? string.Empty
                 : string.Empty;
-            
+
             // 根据command调用相应的函数
             switch (command)
             {
@@ -57,7 +57,7 @@ public static class ClassIslandAPIHelper
             return BuildErrorResult(400, "Missing or invalid 'command' parameter");
         }
     }
-    
+
     /// <summary>
     /// 构建一个包含指定状态码和消息的错误响应对象。
     /// </summary>
@@ -72,7 +72,7 @@ public static class ClassIslandAPIHelper
             Message = message
         };
     }
-    
+
     /// <summary>
     /// 检查服务可用性并返回简单的确认响应。
     /// </summary>
@@ -86,7 +86,7 @@ public static class ClassIslandAPIHelper
             Message = "OK"
         };
     }
-    
+
     /// <summary>
     /// 计算系统时间与精确时间服务返回的本地当前时间之间的差值（以毫秒为单位）。
     /// </summary>
@@ -101,16 +101,16 @@ public static class ClassIslandAPIHelper
         try
         {
             var systemTime = DateTime.Now;
-            
+
             var exactTimeService = IAppHost.GetService<IExactTimeService>();
             if (exactTimeService == null)
             {
                 return BuildErrorResult(500, "Internal server error retrieving time difference");
             }
-            
+
             var exactTime = exactTimeService.GetCurrentLocalDateTime();
             var timeDifference = exactTime - systemTime;
-            
+
             return new ApiHelperResult
             {
                 StatusCode = 200,
@@ -127,7 +127,7 @@ public static class ClassIslandAPIHelper
             return BuildErrorResult(500, "Internal server error retrieving time difference");
         }
     }
-    
+
     /// <summary>
     /// 根据传入的 args 参数触发用户通知并返回处理结果。
     /// </summary>
@@ -142,7 +142,7 @@ public static class ClassIslandAPIHelper
         bool allowBreak = true;
         double maskDuration = 3.0;
         double overlayDuration = 5.0;
-        
+
         // 解析args字段
         if (parsedData.TryGetProperty("args", out var argsElement))
         {
@@ -205,13 +205,13 @@ public static class ClassIslandAPIHelper
                 }
             }
         }
-        
+
         // 验证必填参数
         if (string.IsNullOrWhiteSpace(title))
         {
             return BuildErrorResult(400, "Missing required parameter 'title'");
         }
-        
+
         try
         {
             string message = context;
@@ -220,7 +220,7 @@ public static class ClassIslandAPIHelper
                 overlayDuration = 0.0;
             }
             NotificationRequested?.Invoke(null, new NotificationEventArgs(title, message, maskDuration, overlayDuration));
-            
+
             if (allowBreak)
             {
                 return new ApiHelperResult
@@ -263,6 +263,43 @@ public static class ClassIslandAPIHelper
                 return BuildErrorResult(500, "Internal server error retrieving lessons service");
             }
 
+            var profileService = IAppHost.GetService<IProfileService>();
+            var currentClassPlan = lessonsService.CurrentClassPlan;
+            var enhancedClasses = new List<object>();
+
+            if (currentClassPlan != null && currentClassPlan.Classes != null && profileService != null)
+            {
+                foreach (var classInfo in currentClassPlan.Classes)
+                {
+                    object subjectInfo = null;
+
+                    // 尝试获取Subject信息
+                    if (profileService.Profile?.Subjects?.TryGetValue(classInfo.SubjectId, out var subject) == true)
+                    {
+                        subjectInfo = new
+                        {
+                            Name = subject.Name,
+                            Initial = subject.Initial,
+                            TeacherName = subject.TeacherName,
+                            IsOutDoor = subject.IsOutDoor
+                        };
+                    }
+
+                    // 创建包含所有属性的增强类对象，确保结构一致
+                    var enhancedClass = new
+                    {
+                        SubjectId = classInfo.SubjectId,
+                        IsChangedClass = classInfo.IsChangedClass,
+                        IsEnabled = classInfo.IsEnabled,
+                        AttachedObjects = classInfo.AttachedObjects,
+                        IsActive = classInfo.IsActive,
+                        Subject = subjectInfo
+                    };
+
+                    enhancedClasses.Add(enhancedClass);
+                }
+            }
+
             // 创建包含所有需要属性的对象
             var lessonData = new
             {
@@ -270,7 +307,20 @@ public static class ClassIslandAPIHelper
                 NextClassSubject = lessonsService.NextClassSubject,
                 CurrentState = lessonsService.CurrentState,
                 CurrentTimeLayoutItem = lessonsService.CurrentTimeLayoutItem,
-                CurrentClassPlan = lessonsService.CurrentClassPlan,
+                CurrentClassPlan = currentClassPlan != null ? new
+                {
+                    TimeLayoutId = currentClassPlan.TimeLayoutId,
+                    TimeRule = currentClassPlan.TimeRule,
+                    Classes = enhancedClasses,
+                    Name = currentClassPlan.Name,
+                    IsOverlay = currentClassPlan.IsOverlay,
+                    OverlaySourceId = currentClassPlan.OverlaySourceId,
+                    OverlaySetupTime = currentClassPlan.OverlaySetupTime,
+                    IsEnabled = currentClassPlan.IsEnabled,
+                    AssociatedGroup = currentClassPlan.AssociatedGroup,
+                    AttachedObjects = currentClassPlan.AttachedObjects,
+                    IsActive = currentClassPlan.IsActive
+                } : null,
                 NextBreakingTimeLayoutItem = lessonsService.NextBreakingTimeLayoutItem,
                 NextClassTimeLayoutItem = lessonsService.NextClassTimeLayoutItem,
                 CurrentSelectedIndex = lessonsService.CurrentSelectedIndex,

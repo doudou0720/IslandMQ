@@ -18,5 +18,24 @@
   "terminal.integrated.env.windows": {
     "PYTHONIOENCODING": "UTF-8",
     "NODE_ENV": "development"
+  },
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell",
+      "args": [
+        "-NoExit",
+        "/c",
+        "chcp 65001",
+        ">$null"
+      ]
+    },
+    "cmd": {
+      "path": "cmd.exe",
+      "icon": "terminal-cmd",
+      "args": [
+        "/K chcp 65001 >nul"
+      ]
+    }
   }
 }

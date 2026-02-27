@@ -85,6 +85,25 @@ public static class JsonSchemaDefinitions
         .Build();
 
     /// <summary>
+    /// ChangeLesson请求Schema
+    /// </summary>
+    public static readonly JsonSchema ChangeLessonRequestSchema = new JsonSchemaBuilder()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command", "operation")
+        .Properties(
+            ("version", VersionZeroSchemaBuilder),
+            ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("change_lesson")),
+            ("operation", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("replace", "swap", "batch", "clear")),
+            ("date", new JsonSchemaBuilder().Type(SchemaValueType.String)),
+            ("class_index", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0)),
+            ("subject_id", new JsonSchemaBuilder().Type(SchemaValueType.String)),
+            ("class_index1", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0)),
+            ("class_index2", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0)),
+            ("changes", new JsonSchemaBuilder().Type(SchemaValueType.Object))
+        )
+        .Build();
+
+    /// <summary>
     /// Schema 字典，映射命令到对应的 Schema
     /// </summary>
     private static readonly System.Collections.Generic.Dictionary<string, JsonSchema> SchemaDictionary = new()
@@ -92,7 +111,8 @@ public static class JsonSchemaDefinitions
         { "ping", PingRequestSchema },
         { "notice", NoticeRequestSchema },
         { "time", TimeRequestSchema },
-        { "get_lesson", GetLessonRequestSchema }
+        { "get_lesson", GetLessonRequestSchema },
+        { "change_lesson", ChangeLessonRequestSchema }
         // 注意：添加新命令后，需要在这里添加对应的 schema 映射
     };
 

@@ -44,6 +44,8 @@ public static class ClassIslandAPIHelper
                     return Time();
                 case "get_lesson":
                     return GetLesson();
+                case "change_lesson":
+                    return ChangeLesson(parsedData);
                 // 可以在这里添加更多命令
                 // 注意：添加新命令后，需要在 JsonSchemaDefinitions.cs 文件中添加对应的 schema 定义和映射
                 default:
@@ -346,6 +348,147 @@ public static class ClassIslandAPIHelper
             }
             _logger?.LogError(ex, "Error getting lesson data");
             return BuildErrorResult(500, "Internal server error retrieving lesson data");
+        }
+    }
+
+    /// <summary>
+    /// 处理换课命令，支持替换、交换、批量替换和清除换课操作
+    /// </summary>
+    /// <param name="parsedData">包含命令参数的 JSON 对象</param>
+    /// <returns>ApiHelperResult：成功时返回状态码 200，失败时返回错误信息</returns>
+    public static ApiHelperResult ChangeLesson(JsonElement parsedData)
+    {
+        try
+        {
+            var profileService = IAppHost.GetService<IProfileService>();
+            var lessonsService = IAppHost.GetService<ILessonsService>();
+            if (profileService == null || lessonsService == null)
+            {
+                return BuildErrorResult(500, "Internal server error retrieving required services");
+            }
+
+            var classChangeService = new ClassChangeService(profileService, lessonsService);
+
+            // 解析操作类型
+            string operation = string.Empty;
+            if (parsedData.TryGetProperty("operation", out var operationElement))
+            {
+                operation = operationElement.ValueKind == JsonValueKind.String
+                    ? operationElement.GetString() ?? string.Empty
+                    : string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(operation))
+            {
+                return BuildErrorResult(400, "Missing required parameter 'operation'");
+            }
+
+            // 解析日期参数
+            DateTime date = DateTime.Today;
+            if (parsedData.TryGetProperty("date", out var dateElement))
+            {
+                if (dateElement.ValueKind == JsonValueKind.String)
+                {
+                    string dateStr = dateElement.GetString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(dateStr) && !DateTime.TryParse(dateStr, out date))
+                    {
+                        return BuildErrorResult(400, "Invalid date format");
+                    }
+                }
+            }
+
+            switch (operation)
+            {
+                case "replace":
+                    // 解析替换参数
+                    if (!parsedData.TryGetProperty("class_index", out var classIndexElement) ||
+                        !parsedData.TryGetProperty("subject_id", out var subjectIdElement))
+                    {
+                        return BuildErrorResult(400, "Missing required parameters for replace operation: class_index and subject_id");
+                    }
+
+                    int classIndex = classIndexElement.GetInt32();
+                    string subjectIdStr = subjectIdElement.GetString() ?? string.Empty;
+                    if (!Guid.TryParse(subjectIdStr, out var subjectId))
+                    {
+                        return BuildErrorResult(400, "Invalid subject_id format");
+                    }
+
+                    classChangeService.ReplaceClass(date, classIndex, subjectId);
+                    return new ApiHelperResult
+                    {
+                        StatusCode = 200,
+                        Message = "Class replaced successfully"
+                    };
+
+                case "swap":
+                    // 解析交换参数
+                    if (!parsedData.TryGetProperty("class_index1", out var classIndex1Element) ||
+                        !parsedData.TryGetProperty("class_index2", out var classIndex2Element))
+                    {
+                        return BuildErrorResult(400, "Missing required parameters for swap operation: class_index1 and class_index2");
+                    }
+
+                    int classIndex1 = classIndex1Element.GetInt32();
+                    int classIndex2 = classIndex2Element.GetInt32();
+
+                    classChangeService.SwapClasses(date, classIndex1, classIndex2);
+                    return new ApiHelperResult
+                    {
+                        StatusCode = 200,
+                        Message = "Classes swapped successfully"
+                    };
+
+                case "batch":
+                    // 解析批量替换参数
+                    if (!parsedData.TryGetProperty("changes", out var changesElement))
+                    {
+                        return BuildErrorResult(400, "Missing required parameter for batch operation: changes");
+                    }
+
+                    if (changesElement.ValueKind != JsonValueKind.Object)
+                    {
+                        return BuildErrorResult(400, "Invalid changes format: expected object");
+                    }
+
+                    var changes = new Dictionary<int, Guid>();
+                    foreach (var property in changesElement.EnumerateObject())
+                    {
+                        if (int.TryParse(property.Name, out var index) &&
+                            property.Value.ValueKind == JsonValueKind.String &&
+                            Guid.TryParse(property.Value.GetString(), out var newSubjectId))
+                        {
+                            changes[index] = newSubjectId;
+                        }
+                    }
+
+                    classChangeService.BatchReplaceClasses(date, changes);
+                    return new ApiHelperResult
+                    {
+                        StatusCode = 200,
+                        Message = $"Batch replace completed, {changes.Count} classes changed"
+                    };
+
+                case "clear":
+                    classChangeService.ClearClassChanges();
+                    return new ApiHelperResult
+                    {
+                        StatusCode = 200,
+                        Message = "Class changes cleared successfully"
+                    };
+
+                default:
+                    return BuildErrorResult(400, "Invalid operation. Supported operations: replace, swap, batch, clear");
+            }
+        }
+        catch (Exception ex)
+        {
+            if (ExceptionHelper.IsFatal(ex))
+            {
+                throw;
+            }
+            _logger?.LogError(ex, "Error processing change_lesson command");
+            return BuildErrorResult(500, ex.Message);
         }
     }
 }

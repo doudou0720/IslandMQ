@@ -16,18 +16,46 @@ pip install pyzmq
 
 ### REQ/REP 模式 (请求-应答)
 
-使用 `client.py` 向 IslandMQ 插件发送请求并接收响应。
+使用任何支持 ZeroMQ 的语言向 IslandMQ 插件发送 JSON 格式的请求并接收响应。
 
-```bash
-python client.py notice "测试提醒" --context="这是一条测试提醒" --mask-duration=2.0 --overlay-duration=6.0
+**连接信息**:
+- 地址: `tcp://localhost:5555` (注意该端口号可能未来会根据配置而变化)
+- 协议: ZeroMQ REQ/REP 模式
+- 请求格式: JSON
+
+**示例请求**:
+```json
+{
+  "version": 0,
+  "command": "notice",
+  "args": ["测试提醒", "--context=这是一条测试提醒", "--mask-duration=2.0", "--overlay-duration=6.0"]
+}
 ```
 
 ### PUB/SUB 模式 (发布-订阅)
 
-使用 `subscriber.py` 订阅 IslandMQ 插件发布的事件消息。
+使用任何支持 ZeroMQ 的语言订阅 IslandMQ 插件发布的事件消息。
 
-```bash
-python subscriber.py
+**连接信息**:
+- 地址: `tcp://localhost:5556`
+- 协议: ZeroMQ PUB/SUB 模式
+- 订阅: 空字符串（订阅所有事件）
+
+**示例代码**:
+```python
+import zmq
+
+context = zmq.Context()
+socket = context.socket(zmq.SUB)
+socket.connect("tcp://localhost:5556")
+socket.setsockopt_string(zmq.SUBSCRIBE, "")
+
+while True:
+    message = socket.recv_string()
+    print(f"Received event: {message}")
+
+socket.close()
+context.term()
 ```
 
 ## 命令参数说明
@@ -38,17 +66,11 @@ python subscriber.py
 
 **功能**: 健康检查命令，用于验证服务器是否正常运行。
 
-**命令格式**:
-```bash
-# 通过测试命令运行
-python client.py test
-```
-
-**示例请求**:
-```python
-ping_request = {
-    "version": 0,
-    "command": "ping"
+**JSON 请求格式**:
+```json
+{
+  "version": 0,
+  "command": "ping"
 }
 ```
 
@@ -68,25 +90,40 @@ ping_request = {
 
 **功能**: 发送通知消息到 ClassIsland 应用。
 
-**命令格式**:
-```bash
-python client.py notice <title> [--context <内容>] [--allow-break <true|false>] [--mask-duration <秒数>] [--overlay-duration <秒数>]
+**JSON 请求格式**:
+```json
+{
+  "version": 0,
+  "command": "notice",
+  "args": ["测试提醒", "--context=这是一条测试提醒", "--mask-duration=2.0", "--overlay-duration=6.0"]
+}
 ```
 
 **参数说明**:
-- `title` (必填): 通知标题
-- `--context <内容>` (可选): 通知内容
-- `--allow-break <true|false>` (可选): 是否允许打断当前操作，默认为 `true`
-- `--mask-duration <秒数>` (可选): 遮罩显示持续时间，默认为 `3.0` 秒
-- `--overlay-duration <秒数>` (可选): 覆盖层显示持续时间，默认为 `5.0` 秒
+- `args[0]`: 通知标题（必填）
+- `--context=<内容>`: 通知内容（可选）
+- `--allow-break=<true|false>`: 是否允许打断当前操作，默认为 `true`（可选）
+- `--mask-duration=<秒数>`: 遮罩显示持续时间，默认为 `3.0` 秒（可选）
+- `--overlay-duration=<秒数>`: 覆盖层显示持续时间，默认为 `5.0` 秒（可选）
 
 **使用示例**:
-```bash
-# 发送带有标题和内容的通知
-python client.py notice "测试提醒" --context="这是一条测试提醒" --mask-duration=2.0 --overlay-duration=6.0
 
-# 发送仅带标题的简单通知
-python client.py notice "简单提醒"
+1. 发送带有标题和内容的通知:
+```json
+{
+  "version": 0,
+  "command": "notice",
+  "args": ["测试提醒", "--context=这是一条测试提醒", "--mask-duration=2.0", "--overlay-duration=6.0"]
+}
+```
+
+2. 发送仅带标题的简单通知:
+```json
+{
+  "version": 0,
+  "command": "notice",
+  "args": ["简单提醒"]
+}
 ```
 
 **响应**:
@@ -105,16 +142,11 @@ python client.py notice "简单提醒"
 
 **功能**: 获取系统时间与 ClassIsland 精确时间服务之间的差值（以毫秒为单位）。
 
-**命令格式**:
-```bash
-python client.py time
-```
-
-**示例请求**:
-```python
-time_request = {
-    "version": 0,
-    "command": "time"
+**JSON 请求格式**:
+```json
+{
+  "version": 0,
+  "command": "time"
 }
 ```
 
@@ -122,7 +154,7 @@ time_request = {
 ```json
 {
   "success": true,
-  "message": "123.456",  // 时间差值（毫秒）
+  "message": "1919.8106",  // 时间差值（毫秒）
   "data": null,
   "request_id": 1,
   "status_code": 200,
@@ -132,56 +164,194 @@ time_request = {
 
 #### 4. lesson 命令
 
-**功能**: 获取当前课程信息，包括当前科目、下节课科目、课表信息等。
+**功能**: 获取当前课程信息，包括当前科目、下节课科目、（当前）课表信息等。
 
-**命令格式**:
-```bash
-python client.py lesson
-```
-
-**示例请求**:
-```python
-get_lesson_request = {
-    "version": 0,
-    "command": "get_lesson"
+**JSON 请求格式**:
+```json
+{
+  "version": 0,
+  "command": "get_lesson"
 }
 ```
 
 **响应**:
+
+<details>
+<summary>点击展开响应示例</summary>
 ```json
 {
   "success": true,
   "message": "Lesson data retrieved successfully",
   "data": {
-    "CurrentSubject": { ... },  // 当前科目信息
-    "NextClassSubject": { ... },  // 下节课科目信息
-    "CurrentState": "OnClass",  // 当前状态（上课、课间、放学等）
-    "CurrentClassPlan": {  // 当前课表信息
-      "TimeLayoutId": "guid",
-      "Classes": [
-        {
-          "SubjectId": "guid",
-          "IsChangedClass": false,  // 是否为换课
-          "Subject": { ... }  // 科目详细信息
-        },
-        // 更多课程...
-      ]
+    "CurrentSubject": {  // 当前科目信息
+      "Name": "???",  // 科目名称
+      "Initial": "?",  // 科目简称
+      "TeacherName": "",  // 教师姓名
+      "IsOutDoor": false,  // 是否为户外科目
+      "AttachedObjects": {},  // 附加对象
+      "IsActive": false  // 是否被禁用
     },
-    // 更多信息...
+    "NextClassSubject": {  // 下节课科目信息，内容同上
+      "Name": "???",  // 科目名称
+      "Initial": "?",  // 科目简称
+      "TeacherName": "",  // 教师姓名
+      "IsOutDoor": false,  // 是否为户外科目
+      "AttachedObjects": {},  // 附加对象
+      "IsActive": false  // 是否被禁用
+    },
+    "CurrentState": 0,  // 当前状态（0=无状态，1=准备上课，2=上课中，3=课间休息，4=放学）
+    "CurrentTimeLayoutItem": {  // 当前时间点信息
+      "StartSecond": "",  // 开始秒数（已废弃）
+      "EndSecond": "",  // 结束秒数（已废弃）
+      "StartTime": "00:00:00",  // 开始时间
+      "EndTime": "00:00:00",  // 结束时间
+      "TimeType": 0,  // 时间类型（0=上课，1=课间，2=其他）
+      "IsHideDefault": false,  // 是否隐藏默认课程
+      "DefaultClassId": "00000000-0000-0000-0000-000000000000",  // 默认课程ID
+      "BreakName": "",  // 课间名称
+      "ActionSet": null,  // 动作集
+      "AttachedObjects": {},  // 附加对象
+      "IsActive": false  // 是否被禁用
+    },
+    "CurrentClassPlan": {  // 当前课表信息（无课表时为null）
+      "TimeLayoutId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // 时间表GUID
+      "Name": "周一课表",  // 课表名称
+      "TimeRule": {  // 时间规则
+        "WeekDay": 1,  // 星期几（0=周日，1=周一，...，6=周六）
+        "WeekRotation": 0,  // 周轮换（0=不轮换，1=单周，2=双周）
+        "StartDate": "2024-01-01T00:00:00",  // 开始日期
+        "EndDate": "2024-12-31T23:59:59"  // 结束日期
+      },
+      "IsActivated": true,  // 是否激活
+      "IsOverlay": false,  // 是否为临时层
+      "OverlaySourceId": null,  // 原始课表ID（仅临时层用）
+      "OverlaySetupTime": "2024-01-01T00:00:00",  // 临时层创建时间
+      "IsEnabled": true,  // 是否启用
+      "AssociatedGroup": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // 关联组ID
+      "Classes": [  // 课程列表
+        {
+          "SubjectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // 科目ID
+          "IsChangedClass": false,  // 是否为换课
+          "IsEnabled": true,  // 是否启用
+          "AttachedObjects": {},  // 附加对象
+          "IsActive": false  // 是否被禁用
+        }
+        // 更多课程...
+      ],
+      "TimeLayouts": {  // 时间表集合
+        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": {  // 时间表GUID
+          "Name": "默认时间表",  // 时间表名称
+          "Layouts": [  // 时间点列表
+            {
+              "StartTime": "08:00:00",  // 开始时间
+              "EndTime": "08:45:00",  // 结束时间
+              "TimeType": 0,  // 时间类型（0=上课，1=课间，2=其他）
+              "IsHideDefault": false,  // 是否隐藏默认
+              "DefaultClassId": "00000000-0000-0000-0000-000000000000",  // 默认课程ID
+              "BreakName": "",  // 课间名称
+              "ActionSet": null,  // 动作集
+              "AttachedObjects": {},  // 附加对象
+              "IsActive": false  // 是否被禁用
+            }
+            // 更多时间点...
+          ],
+          "IsActivated": false,  // 是否激活
+          "IsActivatedManually": false  // 是否手动激活
+        }
+      }
+    },  // 当前课表信息
+    "NextBreakingTimeLayoutItem": {  // 下一个课间时间点，内容同 CurrentTimeLayoutItem
+      "StartSecond": "",  // 开始秒数（已废弃）
+      "EndSecond": "",  // 结束秒数（已废弃）
+      "StartTime": "00:00:00",  // 开始时间
+      "EndTime": "00:00:00",  // 结束时间
+      "TimeType": 0,  // 时间类型（0=上课，1=课间，2=其他）
+      "IsHideDefault": false,  // 是否隐藏默认课程
+      "DefaultClassId": "00000000-0000-0000-0000-000000000000",  // 默认课程ID
+      "BreakName": "",  // 课间名称
+      "ActionSet": null,  // 动作集
+      "AttachedObjects": {},  // 附加对象
+      "IsActive": false  // 是否被禁用
+    },
+    "NextClassTimeLayoutItem": {  // 下一个上课时间点，内容同 CurrentTimeLayoutItem
+      "StartSecond": "",  // 开始秒数（已废弃）
+      "EndSecond": "",  // 结束秒数（已废弃）
+      "StartTime": "00:00:00",  // 开始时间
+      "EndTime": "00:00:00",  // 结束时间
+      "TimeType": 0,  // 时间类型（0=上课，1=课间，2=其他）
+      "IsHideDefault": false,  // 是否隐藏默认课程
+      "DefaultClassId": "00000000-0000-0000-0000-000000000000",  // 默认课程ID
+      "BreakName": "",  // 课间名称
+      "ActionSet": null,  // 动作集
+      "AttachedObjects": {},  // 附加对象
+      "IsActive": false  // 是否被禁用
+    },
+    "CurrentSelectedIndex": -1,  // 当前时间点索引（无则为-1）
+    "OnClassLeftTime": "00:00:00",  // 距上课剩余时间（上课中或无下一节则为0）
+    "OnBreakingTimeLeftTime": "00:00:00",  // 距下课剩余时间（不在上课则为0）
+    "IsClassPlanEnabled": true,  // 是否启用课表
+    "IsClassPlanLoaded": false,  // 是否已加载课表
+    "IsLessonConfirmed": false  // 是否已确定当前时间点
   },
   "request_id": 1,
   "status_code": 200,
   "version": 0
 }
 ```
+</details>
 
 #### 5. change_lesson 命令
 
 **功能**: 换课操作，支持替换、交换、批量替换和清除换课。
 
-**命令格式**:
-```bash
-python client.py change_lesson <operation> [参数] [--date <日期>]
+**JSON 请求格式**:
+
+##### 1. 替换课程
+```json
+{
+  "version": 0,
+  "command": "change_lesson",
+  "operation": "replace",
+  "class_index": 2,
+  "subject_id": "550e8400-e29b-41d4-a716-446655440000",
+  "date": "2026-02-28"
+}
+```
+
+##### 2. 交换课程
+```json
+{
+  "version": 0,
+  "command": "change_lesson",
+  "operation": "swap",
+  "class_index1": 1,
+  "class_index2": 3,
+  "date": "2026-02-28"
+}
+```
+
+##### 3. 批量替换课程
+```json
+{
+  "version": 0,
+  "command": "change_lesson",
+  "operation": "batch",
+  "changes": {
+    "0": "550e8400-e29b-41d4-a716-446655440000",
+    "2": "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  },
+  "date": "2026-02-28"
+}
+```
+
+##### 4. 清除换课
+```json
+{
+  "version": 0,
+  "command": "change_lesson",
+  "operation": "clear",
+  "date": "2026-02-28"
+}
 ```
 
 **操作类型**:
@@ -195,45 +365,19 @@ python client.py change_lesson <operation> [参数] [--date <日期>]
 ##### replace 操作参数
 - `class_index` (必填): 课程索引（从 0 开始）
 - `subject_id` (必填): 新科目的 GUID
-- `--date <日期>` (可选): 日期（格式：YYYY-MM-DD），默认为今天
+- `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### swap 操作参数
 - `class_index1` (必填): 第一节课程的索引（从 0 开始）
 - `class_index2` (必填): 第二节课程的索引（从 0 开始）
-- `--date <日期>` (可选): 日期（格式：YYYY-MM-DD），默认为今天
+- `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### batch 操作参数
-- `changes` (必填): JSON 格式的替换计划，键为课程索引，值为新科目的 GUID
-- `--date <日期>` (可选): 日期（格式：YYYY-MM-DD），默认为今天
+- `changes` (必填): JSON 对象，键为课程索引，值为新科目的 GUID
+- `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### clear 操作参数
-- `--date <日期>` (可选): 日期（格式：YYYY-MM-DD），默认为今天
-
-**使用示例**:
-
-##### 1. 替换课程
-```bash
-# 将第 3 节课（索引为 2）替换为指定科目
-python client.py change_lesson replace 2 "550e8400-e29b-41d4-a716-446655440000" --date "2026-02-28"
-```
-
-##### 2. 交换课程
-```bash
-# 交换第 2 节（索引为 1）和第 4 节（索引为 3）课程
-python client.py change_lesson swap 1 3 --date "2026-02-28"
-```
-
-##### 3. 批量替换课程
-```bash
-# 批量替换第 1 节和第 3 节课
-python client.py change_lesson batch "{\"0\": \"550e8400-e29b-41d4-a716-446655440000\", \"2\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\"}" --date "2026-02-28"
-```
-
-##### 4. 清除换课
-```bash
-# 清除指定日期的所有换课
-python client.py change_lesson clear --date "2026-02-28"
-```
+- `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 **注意事项**:
 1. 确保提供的科目 GUID 是有效的，否则会返回错误
@@ -243,60 +387,26 @@ python client.py change_lesson clear --date "2026-02-28"
 5. 换课操作会创建临时课表，不会修改原始课表
 6. 换课后，课程的 `IsChangedClass` 字段会被设置为 `true`，用于在界面上高亮显示
 
-## 代码示例
-
-### 发送 notice 请求
-
-```python
-import zmq
-import json
-
-context = zmq.Context()
-socket = context.socket(zmq.REQ)
-socket.connect("tcp://localhost:5555")
-
-notice_request = {
-    "version": 0,
-    "command": "notice",
-    "args": ["测试提醒", "--context=这是一条测试提醒", "--mask-duration=2.0", "--overlay-duration=6.0"]
-}
-
-socket.send_string(json.dumps(notice_request))
-response = socket.recv_string()
-response_data = json.loads(response)
-
-print(f"Status: {response_data['status_code']}")
-print(f"Message: {response_data['message']}")
-
-socket.close()
-context.term()
-```
 
 ### 订阅事件消息
 
-```python
-import zmq
+使用 ZeroMQ SUB 模式订阅事件消息，连接到 `tcp://localhost:5556` 端口，订阅所有消息（空字符串订阅）。
 
-context = zmq.Context()
-socket = context.socket(zmq.SUB)
-socket.connect("tcp://localhost:5556")
-socket.setsockopt_string(zmq.SUBSCRIBE, "")
+```bash
+# 使用 Python 示例
+python subscriber.py
 
-while True:
-    message = socket.recv_string()
-    print(f"Received event: {message}")
-
-socket.close()
-context.term()
+# 或使用其他支持 ZeroMQ 的语言
+# 例如 Node.js:
+# const zmq = require('zeromq');
+# const sock = new zmq.Subscriber();
+# sock.connect('tcp://localhost:5556');
+# sock.subscribe('');
+# console.log('Subscribed to events');
+# for await (const [msg] of sock) {
+#   console.log('Received event:', msg.toString());
+# }
 ```
-
-## 支持的命令
-
-- `ping`: 健康检查
-- `notice`: 发送通知
-- `time`: 获取时间差值
-- `lesson`: 获取课程信息
-- `change_lesson`: 换课操作（支持替换、交换、批量替换和清除换课）
 
 ## 发布的事件
 

@@ -104,6 +104,19 @@ public static class JsonSchemaDefinitions
         .Build();
 
     /// <summary>
+    /// GetClassPlan请求Schema
+    /// </summary>
+    public static readonly JsonSchema GetClassPlanRequestSchema = new JsonSchemaBuilder()
+        .Type(SchemaValueType.Object)
+        .Required("version", "command")
+        .Properties(
+            ("version", VersionZeroSchemaBuilder),
+            ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("get_classplan")),
+            ("date", new JsonSchemaBuilder().Type(SchemaValueType.String).Pattern("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"))
+        )
+        .Build();
+
+    /// <summary>
     /// Schema 字典，映射命令到对应的 Schema
     /// </summary>
     private static readonly System.Collections.Generic.Dictionary<string, JsonSchema> SchemaDictionary = new()
@@ -112,14 +125,15 @@ public static class JsonSchemaDefinitions
         { "notice", NoticeRequestSchema },
         { "time", TimeRequestSchema },
         { "get_lesson", GetLessonRequestSchema },
-        { "change_lesson", ChangeLessonRequestSchema }
+        { "change_lesson", ChangeLessonRequestSchema },
+        { "get_classplan", GetClassPlanRequestSchema }
         // 注意：添加新命令后，需要在这里添加对应的 schema 映射
     };
 
     /// <summary>
     /// 根据命令名称返回对应的预定义 JSON Schema。
     /// </summary>
-    /// <param name="command">命令名称（例如 "ping"、"notice"、"time"、"get_lesson"），大小写须与注册键匹配。</param>
+    /// <param name="command">命令名称（例如 "ping"、"notice"、"time"、"get_lesson"、"change_lesson"、"get_classplan"），大小写须与注册键匹配。</param>
     /// <returns>如果找到对应命令则返回预定义的 JsonSchema，否则返回 null。</returns>
     public static JsonSchema? GetSchemaForCommand(string? command)
     {

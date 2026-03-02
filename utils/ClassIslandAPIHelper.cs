@@ -343,13 +343,14 @@ namespace IslandMQ.Utils
                 DateTime date = DateTime.Today;
                 if (parsedData.TryGetProperty("date", out JsonElement dateElement))
                 {
-                    if (dateElement.ValueKind == JsonValueKind.String)
+                    if (dateElement.ValueKind != JsonValueKind.String)
                     {
-                        string dateStr = dateElement.GetString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(dateStr) && !DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
-                        {
-                            return BuildErrorResult(400, "Invalid date format");
-                        }
+                        return BuildErrorResult(400, "Invalid date format: expected string");
+                    }
+                    string dateStr = dateElement.GetString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(dateStr) && !DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                    {
+                        return BuildErrorResult(400, "Invalid date format");
                     }
                 }
 
@@ -564,13 +565,14 @@ namespace IslandMQ.Utils
                 DateTime date = DateTime.Today;
                 if (parsedData.TryGetProperty("date", out JsonElement dateElement))
                 {
-                    if (dateElement.ValueKind == JsonValueKind.String)
+                    if (dateElement.ValueKind != JsonValueKind.String)
                     {
-                        string dateStr = dateElement.GetString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(dateStr) && !DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
-                        {
-                            return BuildErrorResult(400, "Invalid date format");
-                        }
+                        return BuildErrorResult(400, "Invalid date format: expected string");
+                    }
+                    string dateStr = dateElement.GetString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(dateStr) && !DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+                    {
+                        return BuildErrorResult(400, "Invalid date format");
                     }
                 }
 

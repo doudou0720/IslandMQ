@@ -63,6 +63,15 @@ public static class JsonParser0
                 };
             }
             
+            if (commandElement.ValueKind != JsonValueKind.String)
+            {
+                return new JsonParseResult
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid 'command' parameter: expected string"
+                };
+            }
+            
             string command = commandElement.GetString()!;
             
             // 使用JsonSchema验证请求

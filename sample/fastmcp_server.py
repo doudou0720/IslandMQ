@@ -165,9 +165,9 @@ def get_time():
         }
         ok, resp = send_request(_zmq_context, holder, time_request)
         if ok and resp.get("success"):
-            data = resp.get("data")
-            payload = data if isinstance(data, dict) else resp
-            return {"success": True, "time_difference": payload.get("time_difference"), "message": "Time retrieved successfully"}
+            # 服务端 Time() 返回的时间差在 message 字段中
+            time_difference = resp.get("message")
+            return {"success": True, "time_difference": time_difference, "message": "Time retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get time: {resp}"}
     finally:
@@ -194,9 +194,10 @@ def get_lesson():
         }
         ok, resp = send_request(_zmq_context, holder, get_lesson_request)
         if ok and resp.get("success"):
+            # 服务端 GetLesson() 将课程数据直接放在 data 中
             data = resp.get("data")
-            payload = data if isinstance(data, dict) else resp
-            return {"success": True, "lesson_data": payload.get("lesson_data"), "message": "Lesson retrieved successfully"}
+            lesson_data = data if isinstance(data, dict) else None
+            return {"success": True, "lesson_data": lesson_data, "message": "Lesson retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get lesson: {resp}"}
     finally:

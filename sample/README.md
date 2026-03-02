@@ -178,7 +178,7 @@ context.term()
 
 <details>
 <summary>点击展开响应示例</summary>
-```json
+```jsonc
 {
   "success": true,
   "message": "Lesson data retrieved successfully",
@@ -320,7 +320,7 @@ context.term()
 
 <details>
 <summary>点击展开响应示例</summary>
-```json
+```jsonc
 {
   "success": true,
   "message": "Class plan retrieved successfully",

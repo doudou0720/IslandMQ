@@ -118,7 +118,8 @@ def ping_islandmq():
 )
 def send_notice(title, context=None, allow_break=True, mask_duration=None, overlay_duration=None):
     """
-    Send a notice to ClassIsland application
+    Send a notice to ClassIsland application.
+    Please, do not contain \\n in title or context.
     """
     holder = SocketHolder(create_socket(_zmq_context))
     try:
@@ -179,7 +180,7 @@ def get_time():
     description="Get current lesson information, including current subject, next lesson subject, and class plan information.\n\n" +
     "Returns:\n" +
     "- success: True if lesson information retrieved successfully, False otherwise\n" +
-    "- lesson_data: Detailed lesson information\n" +
+    "- data: Detailed lesson information\n" +
     "- message: Status message if failed"
 )
 def get_lesson():
@@ -211,7 +212,7 @@ def get_lesson():
     "- date: Date in YYYY-MM-DD format (optional, default is today)\n\n" +
     "Returns:\n" +
     "- success: True if classplan retrieved successfully, False otherwise\n" +
-    "- classplan_data: Detailed classplan information\n" +
+    "- data: Detailed classplan information\n" +
     "- message: Status message if failed"
 )
 def get_classplan(date=None):
@@ -230,8 +231,7 @@ def get_classplan(date=None):
         ok, resp = send_request(_zmq_context, holder, get_classplan_request)
         if ok and resp.get("success"):
             data = resp.get("data")
-            payload = data if isinstance(data, dict) else resp
-            return {"success": True, "classplan_data": payload.get("classplan_data"), "message": "Classplan retrieved successfully"}
+            return {"success": True, "data": data, "message": "Classplan retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get classplan: {resp}"}
     finally:
@@ -255,7 +255,8 @@ def get_classplan(date=None):
     "Notes:\n" +
     "- For batch operation, changes must be a dictionary/object, not a JSON string\n" +
     "- Class indexes correspond to the class list, only matching TimeType==0 (class) time slots, not breaks (TimeType==1) or others (TimeType==2)\n" +
-    "- Example: {\"0\": \"550e8400-e29b-41d4-a716-446655440000\", \"1\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\"}"
+    "- Example: {\"0\": \"550e8400-e29b-41d4-a716-446655440000\", \"1\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\"}"+
+    "- Note:Please call the get_classplan to get the class list index FIRST even if you know the class index, cause the class list may be changed by other tools."
 )
 def change_lesson(operation, date=None, class_index=None, subject_id=None, class_index1=None, class_index2=None, changes=None):
     """

@@ -5,7 +5,7 @@
 
 id: IslandMQ
 name: IslandMQ
-description: 适用于ClassIsland 2.x的远程API调用插件
+description: 适用于ClassIsland 2.x的多操作系统远程API调用插件
 entranceAssembly: "IslandMQ.dll"
 url: https://github.com/doudou0720/IslandMQ
 version: 0.0.0.0

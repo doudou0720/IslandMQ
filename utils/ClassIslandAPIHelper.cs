@@ -480,6 +480,15 @@ namespace IslandMQ.Utils
                 {
                     throw;
                 }
+
+                // Check for client/parameter errors
+                if (ex is ArgumentException || ex is ArgumentNullException || ex is FormatException || ex is IndexOutOfRangeException || ex is System.Text.Json.JsonException)
+                {
+                    _logger?.LogWarning(ex, "Invalid request parameters for change_lesson command");
+                    return BuildErrorResult(400, "Invalid request parameters");
+                }
+
+                // For other errors, return 500
                 _logger?.LogError(ex, "Error processing change_lesson command");
                 return BuildErrorResult(500, "An unexpected error occurred");
             }

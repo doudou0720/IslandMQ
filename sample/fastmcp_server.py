@@ -165,7 +165,8 @@ def get_time():
         }
         ok, resp = send_request(_zmq_context, holder, time_request)
         if ok and resp.get("success"):
-            return {"success": True, "time_difference": resp.get("time_difference"), "message": "Time retrieved successfully"}
+            payload = resp.get("data", resp)
+            return {"success": True, "time_difference": payload.get("time_difference"), "message": "Time retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get time: {resp}"}
     finally:
@@ -192,7 +193,8 @@ def get_lesson():
         }
         ok, resp = send_request(_zmq_context, holder, get_lesson_request)
         if ok and resp.get("success"):
-            return {"success": True, "lesson_data": resp.get("lesson_data"), "message": "Lesson retrieved successfully"}
+            payload = resp.get("data", resp)
+            return {"success": True, "lesson_data": payload.get("lesson_data"), "message": "Lesson retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get lesson: {resp}"}
     finally:
@@ -224,7 +226,8 @@ def get_classplan(date=None):
 
         ok, resp = send_request(_zmq_context, holder, get_classplan_request)
         if ok and resp.get("success"):
-            return {"success": True, "classplan_data": resp.get("classplan_data"), "message": "Classplan retrieved successfully"}
+            payload = resp.get("data", resp)
+            return {"success": True, "classplan_data": payload.get("classplan_data"), "message": "Classplan retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get classplan: {resp}"}
     finally:

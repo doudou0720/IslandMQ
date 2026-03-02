@@ -63,6 +63,7 @@ public static class JsonParser0
                 };
             }
             
+            
             string command = commandElement.GetString()!;
             
             // 使用JsonSchema验证请求

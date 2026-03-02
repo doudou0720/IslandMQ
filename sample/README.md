@@ -222,7 +222,7 @@ context.term()
         "StartDate": "2024-01-01T00:00:00",  // 开始日期
         "EndDate": "2024-12-31T23:59:59"  // 结束日期
       },
-      "IsActivated": true,  // 是否激活
+      "IsActive": true,  // 是否激活
       "IsOverlay": false,  // 是否为临时层
       "OverlaySourceId": null,  // 原始课表ID（仅临时层用）
       "OverlaySetupTime": "2024-01-01T00:00:00",  // 临时层创建时间
@@ -234,31 +234,16 @@ context.term()
           "IsChangedClass": false,  // 是否为换课
           "IsEnabled": true,  // 是否启用
           "AttachedObjects": {},  // 附加对象
-          "IsActive": false  // 是否被禁用
+          "IsActive": false,  // 是否被禁用
+          "Subject": {  // 科目信息
+            "Name": "数学",  // 科目名称
+            "Initial": "M",  // 科目简称
+            "TeacherName": "张老师",  // 教师姓名
+            "IsOutDoor": false  // 是否为户外活动
+          }
         }
         // 更多课程...
-      ],
-      "TimeLayouts": {  // 时间表集合
-        "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": {  // 时间表GUID
-          "Name": "默认时间表",  // 时间表名称
-          "Layouts": [  // 时间点列表
-            {
-              "StartTime": "08:00:00",  // 开始时间
-              "EndTime": "08:45:00",  // 结束时间
-              "TimeType": 0,  // 时间类型（0=上课，1=课间，2=其他）
-              "IsHideDefault": false,  // 是否隐藏默认
-              "DefaultClassId": "00000000-0000-0000-0000-000000000000",  // 默认课程ID
-              "BreakName": "",  // 课间名称
-              "ActionSet": null,  // 动作集
-              "AttachedObjects": {},  // 附加对象
-              "IsActive": false  // 是否被禁用
-            }
-            // 更多时间点...
-          ],
-          "IsActivated": false,  // 是否激活
-          "IsActivatedManually": false  // 是否手动激活
-        }
-      }
+      ]
     },  // 当前课表信息
     "NextBreakingTimeLayoutItem": {  // 下一个课间时间点，内容同 CurrentTimeLayoutItem
       "StartSecond": "",  // 开始秒数（已废弃）

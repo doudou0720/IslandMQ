@@ -165,7 +165,8 @@ def get_time():
         }
         ok, resp = send_request(_zmq_context, holder, time_request)
         if ok and resp.get("success"):
-            payload = resp.get("data", resp)
+            data = resp.get("data")
+            payload = data if isinstance(data, dict) else resp
             return {"success": True, "time_difference": payload.get("time_difference"), "message": "Time retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get time: {resp}"}
@@ -193,7 +194,8 @@ def get_lesson():
         }
         ok, resp = send_request(_zmq_context, holder, get_lesson_request)
         if ok and resp.get("success"):
-            payload = resp.get("data", resp)
+            data = resp.get("data")
+            payload = data if isinstance(data, dict) else resp
             return {"success": True, "lesson_data": payload.get("lesson_data"), "message": "Lesson retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get lesson: {resp}"}
@@ -226,7 +228,8 @@ def get_classplan(date=None):
 
         ok, resp = send_request(_zmq_context, holder, get_classplan_request)
         if ok and resp.get("success"):
-            payload = resp.get("data", resp)
+            data = resp.get("data")
+            payload = data if isinstance(data, dict) else resp
             return {"success": True, "classplan_data": payload.get("classplan_data"), "message": "Classplan retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get classplan: {resp}"}
@@ -275,7 +278,9 @@ def change_lesson(operation, date=None, class_index=None, subject_id=None, class
                     changes = json.loads(changes)
                 except json.JSONDecodeError as e:
                     return {"success": False, "message": f"Invalid JSON in changes parameter: {e}"}
-            elif not isinstance(changes, dict):
+
+            # 验证解析结果是字典
+            if not isinstance(changes, dict):
                 return {"success": False, "message": "changes must be a dictionary or JSON string"}
 
             # 将字典中的键和值都转换为字符串

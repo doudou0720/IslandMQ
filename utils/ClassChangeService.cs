@@ -35,19 +35,19 @@ namespace IslandMQ.Utils
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new Exception("未找到指定日期的课表");
+                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
             }
 
             // 如果是覆盖层，使用原始课表ID
             Guid originalClassPlanId = classPlan.IsOverlay && classPlan.OverlaySourceId != null ? classPlan.OverlaySourceId.Value : classPlanId.Value;
 
             // 获取或创建临时层
-            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new Exception("获取临时层失败");
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new ArgumentException("获取临时层失败");
 
             // 检查索引有效性
             if (classIndex < 0 || classIndex >= targetClassPlan.Classes.Count)
             {
-                throw new Exception("课程索引无效");
+                throw new ArgumentOutOfRangeException(nameof(classIndex), "课程索引无效");
             }
 
             // 验证科目ID是否存在
@@ -88,17 +88,17 @@ namespace IslandMQ.Utils
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new Exception("未找到指定日期的课表");
+                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
             }
 
             // 如果是覆盖层，使用原始课表ID
             Guid originalClassPlanId = classPlan.IsOverlay && classPlan.OverlaySourceId != null ? classPlan.OverlaySourceId.Value : classPlanId.Value;
 
-            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new Exception("获取临时层失败");
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new ArgumentException("获取临时层失败");
             if (classIndex1 < 0 || classIndex1 >= targetClassPlan.Classes.Count ||
                 classIndex2 < 0 || classIndex2 >= targetClassPlan.Classes.Count)
             {
-                throw new Exception("课程索引无效");
+                throw new ArgumentOutOfRangeException(classIndex1 < 0 || classIndex1 >= targetClassPlan.Classes.Count ? nameof(classIndex1) : nameof(classIndex2), "课程索引无效");
             }
 
             // 交换课程
@@ -133,13 +133,13 @@ namespace IslandMQ.Utils
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new Exception("未找到指定日期的课表");
+                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
             }
 
             // 如果是覆盖层，使用原始课表ID
             Guid originalClassPlanId = classPlan.IsOverlay && classPlan.OverlaySourceId != null ? classPlan.OverlaySourceId.Value : classPlanId.Value;
 
-            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new Exception("获取临时层失败");
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(originalClassPlanId, date) ?? throw new ArgumentException("获取临时层失败");
 
             // 预验证所有索引
             List<int> invalidIndices = [];
@@ -156,14 +156,18 @@ namespace IslandMQ.Utils
                 throw new ArgumentOutOfRangeException(nameof(changes), $"Invalid class indices: {string.Join(", ", invalidIndices)}");
             }
 
-            // 应用所有更改
+            // 预验证所有科目ID
             foreach (KeyValuePair<int, Guid> change in changes)
             {
-                // 验证科目ID是否存在
                 if (!_profileService.Profile.Subjects.ContainsKey(change.Value))
                 {
                     throw new ArgumentException($"Subject with ID {change.Value} does not exist");
                 }
+            }
+
+            // 应用所有更改
+            foreach (KeyValuePair<int, Guid> change in changes)
+            {
                 targetClassPlan.Classes[change.Key].SubjectId = change.Value;
                 targetClassPlan.Classes[change.Key].IsChangedClass = true;
             }

@@ -367,6 +367,10 @@ namespace IslandMQ.Utils
                         {
                             return BuildErrorResult(400, "Invalid class_index format");
                         }
+                        if (subjectIdElement.ValueKind != JsonValueKind.String)
+                        {
+                            return BuildErrorResult(400, "Invalid subject_id format");
+                        }
                         string subjectIdStr = subjectIdElement.GetString() ?? string.Empty;
                         if (!Guid.TryParse(subjectIdStr, out Guid subjectId))
                         {

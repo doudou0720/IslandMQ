@@ -417,6 +417,7 @@ namespace IslandMQ.Utils
                         }
 
                         Dictionary<int, Guid> changes = [];
+                        List<string> invalidEntries = [];
                         foreach (JsonProperty property in changesElement.EnumerateObject())
                         {
                             if (int.TryParse(property.Name, out int index) &&
@@ -425,13 +426,40 @@ namespace IslandMQ.Utils
                             {
                                 changes[index] = newSubjectId;
                             }
+                            else
+                            {
+                                string errorReason = "";
+                                if (!int.TryParse(property.Name, out _))
+                                {
+                                    errorReason = "invalid index format";
+                                }
+                                else if (property.Value.ValueKind != JsonValueKind.String)
+                                {
+                                    errorReason = "invalid subject ID format (expected string)";
+                                }
+                                else if (!Guid.TryParse(property.Value.GetString(), out _))
+                                {
+                                    errorReason = "invalid subject ID format (expected GUID)";
+                                }
+                                invalidEntries.Add($"{property.Name}: {errorReason}");
+                            }
+                        }
+
+                        if (invalidEntries.Count > 0)
+                        {
+                            _logger?.LogWarning("Invalid entries found in batch changes: {InvalidEntries}", string.Join(", ", invalidEntries));
                         }
 
                         classChangeService.BatchReplaceClasses(date, changes);
+                        string message = $"Batch replace completed, {changes.Count} classes changed";
+                        if (invalidEntries.Count > 0)
+                        {
+                            message += $"; {invalidEntries.Count} invalid entries were ignored: {string.Join(", ", invalidEntries.Take(5))}{(invalidEntries.Count > 5 ? "..." : "")}";
+                        }
                         return new ApiHelperResult
                         {
                             StatusCode = 200,
-                            Message = $"Batch replace completed, {changes.Count} classes changed"
+                            Message = message
                         };
 
                     case "clear":
@@ -453,7 +481,7 @@ namespace IslandMQ.Utils
                     throw;
                 }
                 _logger?.LogError(ex, "Error processing change_lesson command");
-                return BuildErrorResult(500, ex.Message);
+                return BuildErrorResult(500, "An unexpected error occurred");
             }
         }
 
@@ -544,42 +572,10 @@ namespace IslandMQ.Utils
                 ClassIsland.Shared.Models.Profile.TimeLayout? timeLayout = classPlan.TimeLayout;
 
                 // 构建增强的课程列表（包含科目详情）
-                List<object> enhancedClasses = [];
-                if (classPlan.Classes != null && profileService != null)
-                {
-                    foreach (ClassIsland.Shared.Models.Profile.ClassInfo classInfo in classPlan.Classes)
-                    {
-                        object? subjectInfo = null;
-
-                        // 尝试获取Subject信息
-                        if (profileService.Profile?.Subjects?.TryGetValue(classInfo.SubjectId, out ClassIsland.Shared.Models.Profile.Subject? subject) == true)
-                        {
-                            subjectInfo = new
-                            {
-                                subject.Name,
-                                subject.Initial,
-                                subject.TeacherName,
-                                subject.IsOutDoor
-                            };
-                        }
-
-                        // 创建包含所有属性的增强类对象
-                        var enhancedClass = new
-                        {
-                            classInfo.SubjectId,
-                            classInfo.IsChangedClass,
-                            classInfo.IsEnabled,
-                            classInfo.AttachedObjects,
-                            classInfo.IsActive,
-                            Subject = subjectInfo
-                        };
-
-                        enhancedClasses.Add(enhancedClass);
-                    }
-                }
+                List<object> enhancedClasses = BuildEnhancedClasses(classPlan.Classes, profileService);
 
                 // 获取 TimeType == 0 的时间点索引列表（这些时间点对应课程）
-                var classTimeLayoutIndices = timeLayout != null
+                List<int> classTimeLayoutIndices = timeLayout != null
                     ? timeLayout.Layouts.Select((layout, index) => new { layout.TimeType, Index = index })
                         .Where(x => x.TimeType == 0)
                         .Select(x => x.Index)

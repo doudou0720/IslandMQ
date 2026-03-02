@@ -17,10 +17,19 @@ MCP JSON 配置示例:
 
 import json
 import zmq
+import atexit
 from fastmcp import FastMCP
 from dataclasses import dataclass
 
 SERVER_ADDRESS = "tcp://localhost:5555"
+
+# 全局 zmq context
+_zmq_context = zmq.Context()
+
+# 注册清理函数
+@atexit.register
+def cleanup_zmq():
+    _zmq_context.term()
 
 
 @dataclass
@@ -45,13 +54,13 @@ def send_request(context, holder, payload):
     """
     socket = holder.socket
     json_request = json.dumps(payload, ensure_ascii=False)
-    print(f"Sending request: {json_request}")
+    # print(f"Sending request: {json_request}")
 
     try:
         socket.send_string(json_request)
         response = socket.recv_string()
         json_response = json.loads(response)
-        print(f"Received response: {json.dumps(json_response, indent=2, ensure_ascii=False)}")
+        # print(f"Received response: {json.dumps(json_response, indent=2, ensure_ascii=False)}")
     except zmq.ZMQError as e:
         print(f"ZMQ error: {e}")
         socket.close()
@@ -79,21 +88,19 @@ def ping_islandmq():
     """
     Ping the IslandMQ server to check if it's running
     """
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         ping_request = {
             "version": 0,
             "command": "ping"
         }
-        ok, resp = send_request(ctx, holder, ping_request)
+        ok, resp = send_request(_zmq_context, holder, ping_request)
         if ok and resp.get("success"):
             return {"success": True, "message": "IslandMQ server is running"}
         else:
             return {"success": False, "message": f"Failed to ping server: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 @mcp.tool(
@@ -113,8 +120,7 @@ def send_notice(title, context=None, allow_break=True, mask_duration=None, overl
     """
     Send a notice to ClassIsland application
     """
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         args = [title]
         if context:
@@ -130,14 +136,13 @@ def send_notice(title, context=None, allow_break=True, mask_duration=None, overl
             "command": "notice",
             "args": args
         }
-        ok, resp = send_request(ctx, holder, notice_request)
+        ok, resp = send_request(_zmq_context, holder, notice_request)
         if ok and resp.get("success"):
             return {"success": True, "message": "Notice sent successfully"}
         else:
             return {"success": False, "message": f"Failed to send notice: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 @mcp.tool(
@@ -152,21 +157,19 @@ def get_time():
     """
     Get time difference between exact time and system time
     """
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         time_request = {
             "version": 0,
             "command": "time"
         }
-        ok, resp = send_request(ctx, holder, time_request)
+        ok, resp = send_request(_zmq_context, holder, time_request)
         if ok and resp.get("success"):
-            return {"success": True, "time_difference": resp.get("message")}
+            return {"success": True, "time_difference": resp.get("time_difference"), "message": "Time retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get time: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 @mcp.tool(
@@ -181,21 +184,19 @@ def get_lesson():
     """
     Get current lesson information
     """
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         get_lesson_request = {
             "version": 0,
             "command": "get_lesson"
         }
-        ok, resp = send_request(ctx, holder, get_lesson_request)
+        ok, resp = send_request(_zmq_context, holder, get_lesson_request)
         if ok and resp.get("success"):
-            return {"success": True, "lesson_data": resp.get("data")}
+            return {"success": True, "lesson_data": resp.get("lesson_data"), "message": "Lesson retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get lesson: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 @mcp.tool(
@@ -212,8 +213,7 @@ def get_classplan(date=None):
     """
     Get classplan for a specific date
     """
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         get_classplan_request = {
             "version": 0,
@@ -221,14 +221,14 @@ def get_classplan(date=None):
         }
         if date:
             get_classplan_request["date"] = date
-        ok, resp = send_request(ctx, holder, get_classplan_request)
+
+        ok, resp = send_request(_zmq_context, holder, get_classplan_request)
         if ok and resp.get("success"):
-            return {"success": True, "classplan_data": resp.get("data")}
+            return {"success": True, "classplan_data": resp.get("classplan_data"), "message": "Classplan retrieved successfully"}
         else:
             return {"success": False, "message": f"Failed to get classplan: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 @mcp.tool(
@@ -284,8 +284,7 @@ def change_lesson(operation, date=None, class_index=None, subject_id=None, class
     except (ValueError, TypeError) as e:
         return {"success": False, "message": f"Invalid parameter type: {e}"}
 
-    ctx = zmq.Context()
-    holder = SocketHolder(create_socket(ctx))
+    holder = SocketHolder(create_socket(_zmq_context))
     try:
         change_lesson_request = {
             "version": 0,
@@ -310,15 +309,19 @@ def change_lesson(operation, date=None, class_index=None, subject_id=None, class
             if changes is None:
                 return {"success": False, "message": "changes are required for batch operation"}
             change_lesson_request["changes"] = changes
+        elif operation == "clear":
+            # clear 操作不需要额外参数
+            pass
+        else:
+            return {"success": False, "message": f"unknown operation: {operation}"}
 
-        ok, resp = send_request(ctx, holder, change_lesson_request)
+        ok, resp = send_request(_zmq_context, holder, change_lesson_request)
         if ok and resp.get("success"):
             return {"success": True, "message": "Lesson changed successfully"}
         else:
             return {"success": False, "message": f"Failed to change lesson: {resp}"}
     finally:
         holder.socket.close()
-        ctx.term()
 
 
 if __name__ == "__main__":

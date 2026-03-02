@@ -14,7 +14,7 @@ public static class JsonSchemaDefinitions
         .Type(SchemaValueType.Integer)
         .Minimum(0)
         .Maximum(0);
-    
+
     /// <summary>
     /// 版本 0 的模式定义
     /// </summary>
@@ -94,7 +94,7 @@ public static class JsonSchemaDefinitions
             ("version", VersionZeroSchemaBuilder),
             ("command", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("change_lesson")),
             ("operation", new JsonSchemaBuilder().Type(SchemaValueType.String).Enum("replace", "swap", "batch", "clear")),
-            ("date", new JsonSchemaBuilder().Type(SchemaValueType.String)),
+            ("date", new JsonSchemaBuilder().Type(SchemaValueType.String).Pattern("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")),
             ("class_index", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0)),
             ("subject_id", new JsonSchemaBuilder().Type(SchemaValueType.String)),
             ("class_index1", new JsonSchemaBuilder().Type(SchemaValueType.Integer).Minimum(0)),

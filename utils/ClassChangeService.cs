@@ -17,33 +17,44 @@ namespace IslandMQ.Utils
         /// </summary>
         public void ReplaceClass(DateTime date, int classIndex, Guid newSubjectId)
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                // 获取指定日期的课表
-                ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
-                if (classPlan == null || classPlanId == null)
-                {
-                    throw new Exception("未找到指定日期的课表");
-                }
+                // 直接执行
+                ExecuteReplaceClass(date, classIndex, newSubjectId);
+            }
+            else
+            {
+                // 使用InvokeAsync避免死锁
+                Dispatcher.UIThread.InvokeAsync(() => ExecuteReplaceClass(date, classIndex, newSubjectId)).Wait();
+            }
+        }
 
-                // 获取或创建临时层
-                ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
+        private void ExecuteReplaceClass(DateTime date, int classIndex, Guid newSubjectId)
+        {
+            // 获取指定日期的课表
+            ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
+            if (classPlan == null || classPlanId == null)
+            {
+                throw new Exception("未找到指定日期的课表");
+            }
 
-                // 检查索引有效性
-                if (classIndex < 0 || classIndex >= targetClassPlan.Classes.Count)
-                {
-                    throw new Exception("课程索引无效");
-                }
+            // 获取或创建临时层
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
 
-                // 替换课程
-                targetClassPlan.Classes[classIndex].SubjectId = newSubjectId;
+            // 检查索引有效性
+            if (classIndex < 0 || classIndex >= targetClassPlan.Classes.Count)
+            {
+                throw new Exception("课程索引无效");
+            }
 
-                // 标记为换课（用于界面高亮）
-                targetClassPlan.Classes[classIndex].IsChangedClass = true;
+            // 替换课程
+            targetClassPlan.Classes[classIndex].SubjectId = newSubjectId;
 
-                // 保存
-                _profileService.SaveProfile();
-            });
+            // 标记为换课（用于界面高亮）
+            targetClassPlan.Classes[classIndex].IsChangedClass = true;
+
+            // 保存
+            _profileService.SaveProfile();
         }
 
         /// <summary>
@@ -51,30 +62,41 @@ namespace IslandMQ.Utils
         /// </summary>
         public void SwapClasses(DateTime date, int classIndex1, int classIndex2)
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
-                if (classPlan == null || classPlanId == null)
-                {
-                    throw new Exception("未找到指定日期的课表");
-                }
+                // 直接执行
+                ExecuteSwapClasses(date, classIndex1, classIndex2);
+            }
+            else
+            {
+                // 使用InvokeAsync避免死锁
+                Dispatcher.UIThread.InvokeAsync(() => ExecuteSwapClasses(date, classIndex1, classIndex2)).Wait();
+            }
+        }
 
-                ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
-                if (classIndex1 < 0 || classIndex1 >= targetClassPlan.Classes.Count ||
-                    classIndex2 < 0 || classIndex2 >= targetClassPlan.Classes.Count)
-                {
-                    throw new Exception("课程索引无效");
-                }
+        private void ExecuteSwapClasses(DateTime date, int classIndex1, int classIndex2)
+        {
+            ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
+            if (classPlan == null || classPlanId == null)
+            {
+                throw new Exception("未找到指定日期的课表");
+            }
 
-                // 交换课程
-                (targetClassPlan.Classes[classIndex2].SubjectId, targetClassPlan.Classes[classIndex1].SubjectId) = (targetClassPlan.Classes[classIndex1].SubjectId, targetClassPlan.Classes[classIndex2].SubjectId);
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
+            if (classIndex1 < 0 || classIndex1 >= targetClassPlan.Classes.Count ||
+                classIndex2 < 0 || classIndex2 >= targetClassPlan.Classes.Count)
+            {
+                throw new Exception("课程索引无效");
+            }
 
-                // 标记换课状态
-                targetClassPlan.Classes[classIndex1].IsChangedClass = true;
-                targetClassPlan.Classes[classIndex2].IsChangedClass = true;
+            // 交换课程
+            (targetClassPlan.Classes[classIndex2].SubjectId, targetClassPlan.Classes[classIndex1].SubjectId) = (targetClassPlan.Classes[classIndex1].SubjectId, targetClassPlan.Classes[classIndex2].SubjectId);
 
-                _profileService.SaveProfile();
-            });
+            // 标记换课状态
+            targetClassPlan.Classes[classIndex1].IsChangedClass = true;
+            targetClassPlan.Classes[classIndex2].IsChangedClass = true;
+
+            _profileService.SaveProfile();
         }
 
         /// <summary>
@@ -82,26 +104,51 @@ namespace IslandMQ.Utils
         /// </summary>
         public void BatchReplaceClasses(DateTime date, Dictionary<int, Guid> changes)
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
-                if (classPlan == null || classPlanId == null)
-                {
-                    throw new Exception("未找到指定日期的课表");
-                }
+                // 直接执行
+                ExecuteBatchReplaceClasses(date, changes);
+            }
+            else
+            {
+                // 使用InvokeAsync避免死锁
+                Dispatcher.UIThread.InvokeAsync(() => ExecuteBatchReplaceClasses(date, changes)).Wait();
+            }
+        }
 
-                ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
-                foreach (KeyValuePair<int, Guid> change in changes)
-                {
-                    if (change.Key >= 0 && change.Key < targetClassPlan.Classes.Count)
-                    {
-                        targetClassPlan.Classes[change.Key].SubjectId = change.Value;
-                        targetClassPlan.Classes[change.Key].IsChangedClass = true;
-                    }
-                }
+        private void ExecuteBatchReplaceClasses(DateTime date, Dictionary<int, Guid> changes)
+        {
+            ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
+            if (classPlan == null || classPlanId == null)
+            {
+                throw new Exception("未找到指定日期的课表");
+            }
 
-                _profileService.SaveProfile();
-            });
+            ClassPlan targetClassPlan = GetOrCreateTempClassPlan(classPlanId.Value, date) ?? throw new Exception("获取临时层失败");
+
+            // 预验证所有索引
+            List<int> invalidIndices = [];
+            foreach (int index in changes.Keys)
+            {
+                if (index < 0 || index >= targetClassPlan.Classes.Count)
+                {
+                    invalidIndices.Add(index);
+                }
+            }
+
+            if (invalidIndices.Count > 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(changes), $"Invalid class indices: {string.Join(", ", invalidIndices)}");
+            }
+
+            // 应用所有更改
+            foreach (KeyValuePair<int, Guid> change in changes)
+            {
+                targetClassPlan.Classes[change.Key].SubjectId = change.Value;
+                targetClassPlan.Classes[change.Key].IsChangedClass = true;
+            }
+
+            _profileService.SaveProfile();
         }
 
         /// <summary>
@@ -109,15 +156,25 @@ namespace IslandMQ.Utils
         /// </summary>
         public void ClearClassChanges(DateTime date)
         {
-            Dispatcher.UIThread.Invoke(() =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                // 从OrderedSchedules中移除对应日期的临时层关联
-                if (_profileService.Profile.OrderedSchedules.ContainsKey(date))
-                {
-                    _ = _profileService.Profile.OrderedSchedules.Remove(date);
-                    _profileService.SaveProfile();
-                }
-            });
+                // 直接执行
+                ExecuteClearClassChanges(date);
+            }
+            else
+            {
+                // 使用InvokeAsync避免死锁
+                Dispatcher.UIThread.InvokeAsync(() => ExecuteClearClassChanges(date)).Wait();
+            }
+        }
+
+        private void ExecuteClearClassChanges(DateTime date)
+        {
+            // 从OrderedSchedules中移除对应日期的临时层关联
+            if (_profileService.Profile.OrderedSchedules.Remove(date))
+            {
+                _profileService.SaveProfile();
+            }
         }
 
         /// <summary>
@@ -139,7 +196,9 @@ namespace IslandMQ.Utils
 
             // 2. 没有则创建新的临时层
             Guid? tempClassPlanId = _profileService.CreateTempClassPlan(originalClassPlanId, enableDateTime: date);
-            return tempClassPlanId == null ? null : _profileService.Profile.ClassPlans[tempClassPlanId.Value];
+            return tempClassPlanId == null
+                ? null
+                : _profileService.Profile.ClassPlans.TryGetValue(tempClassPlanId.Value, out ClassPlan? plan) ? plan : null;
         }
 
         /// <summary>
@@ -147,7 +206,7 @@ namespace IslandMQ.Utils
         /// </summary>
         public Dictionary<Guid, Subject> GetAllSubjects()
         {
-            return new Dictionary<Guid, Subject>(_profileService.Profile.Subjects);
+            return Dispatcher.UIThread.Invoke(() => new Dictionary<Guid, Subject>(_profileService.Profile.Subjects));
         }
 
         /// <summary>
@@ -155,8 +214,11 @@ namespace IslandMQ.Utils
         /// </summary>
         public List<ClassInfo>? GetClasses(DateTime date)
         {
-            ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out _);
-            return classPlan?.Classes.ToList();
+            return Dispatcher.UIThread.Invoke(() =>
+            {
+                ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out _);
+                return classPlan?.Classes.ToList();
+            });
         }
     }
 }

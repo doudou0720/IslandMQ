@@ -40,7 +40,7 @@ jobs:
     #   run: git-cliff --tag "${{ github.ref_name }}" --output CHANGELOG.md
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
 
     - name: Sign release artifacts with sigstore-python
       uses: sigstore/gh-action-sigstore-python@v3.2.0

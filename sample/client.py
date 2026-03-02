@@ -305,7 +305,7 @@ if __name__ == "__main__":
     lesson_parser = subparsers.add_parser("lesson", help="Get lesson information")
 
     # 添加 get_classplan 命令
-    classplan_parser = subparsers.add_parser("classplan", help="Get classplan for a specific date")
+    classplan_parser = subparsers.add_parser("classplan", help="Get classplan for a specific date (only returns class time slots)")
     classplan_parser.add_argument("--date", help="Date (YYYY-MM-DD), default is today")
 
     # 添加 change_lesson 命令

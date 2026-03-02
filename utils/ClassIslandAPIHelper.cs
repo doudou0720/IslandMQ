@@ -487,7 +487,7 @@ namespace IslandMQ.Utils
                 }
 
                 // Check for client/parameter errors
-                if (ex is ArgumentException || ex is ArgumentNullException || ex is FormatException || ex is IndexOutOfRangeException || ex is System.Text.Json.JsonException)
+                if (ex is ArgumentException or ArgumentNullException or FormatException or IndexOutOfRangeException or JsonException)
                 {
                     _logger?.LogWarning(ex, "Invalid request parameters for change_lesson command");
                     return BuildErrorResult(400, "Invalid request parameters");
@@ -591,28 +591,25 @@ namespace IslandMQ.Utils
 
                 // 获取 TimeType == 0 的时间点索引列表（这些时间点对应课程）
                 List<int> classTimeLayoutIndices = timeLayout != null
-                    ? timeLayout.Layouts.Select((layout, index) => new { layout.TimeType, Index = index })
+                    ? [.. timeLayout.Layouts.Select((layout, index) => new { layout.TimeType, Index = index })
                         .Where(x => x.TimeType == 0)
-                        .Select(x => x.Index)
-                        .ToList()
+                        .Select(x => x.Index)]
                     : [];
 
                 // 创建包含时间和课程对应关系的结构
                 var timeLayoutWithClasses = timeLayout != null ? new
                 {
                     timeLayout.Name,
-                    Layouts = timeLayout.Layouts.Select((layout, layoutIndex) =>
+                    Layouts = timeLayout.Layouts.Where(layout => layout.TimeType == 0).Select(layout =>
                     {
-                        // 只有 TimeType == 0 的时间点才对应课程
+                        // 找到该时间点在所有 TimeLayout.Layouts 中的索引
+                        int layoutIndex = timeLayout.Layouts.IndexOf(layout);
+                        // 找到该时间点在所有 TimeType==0 时间点中的顺序位置
+                        int classIndex = classTimeLayoutIndices.IndexOf(layoutIndex);
                         object? classInfo = null;
-                        if (layout.TimeType == 0)
+                        if (classIndex >= 0 && classIndex < enhancedClasses.Count)
                         {
-                            // 找到该时间点在所有 TimeType==0 时间点中的顺序位置
-                            int classIndex = classTimeLayoutIndices.IndexOf(layoutIndex);
-                            if (classIndex >= 0 && classIndex < enhancedClasses.Count)
-                            {
-                                classInfo = enhancedClasses[classIndex];
-                            }
+                            classInfo = enhancedClasses[classIndex];
                         }
                         return new
                         {

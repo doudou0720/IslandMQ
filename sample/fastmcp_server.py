@@ -212,7 +212,7 @@ def get_lesson():
     "- date: Date in YYYY-MM-DD format (optional, default is today)\n\n" +
     "Returns:\n" +
     "- success: True if classplan retrieved successfully, False otherwise\n" +
-    "- data: Detailed classplan information\n" +
+    "- classplan_data: Detailed classplan information (only includes class time slots, not breaks)\n" +
     "- message: Status message if failed"
 )
 def get_classplan(date=None):

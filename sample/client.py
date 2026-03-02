@@ -5,9 +5,9 @@ import argparse
 import sys
 
 # 设置标准输出为 UTF-8 编码
-if sys.stdout.encoding != 'utf-8':
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
-if sys.stderr.encoding != 'utf-8':
+if sys.stderr.encoding and sys.stderr.encoding.lower() != 'utf-8':
     sys.stderr.reconfigure(encoding='utf-8')
 
 
@@ -304,6 +304,10 @@ if __name__ == "__main__":
 
     lesson_parser = subparsers.add_parser("lesson", help="Get lesson information")
 
+    # 添加 get_classplan 命令
+    classplan_parser = subparsers.add_parser("classplan", help="Get classplan for a specific date")
+    classplan_parser.add_argument("--date", help="Date (YYYY-MM-DD), default is today")
+
     # 添加 change_lesson 命令
     change_lesson_parser = subparsers.add_parser("change_lesson", help="Change lesson information")
     change_lesson_subparsers = change_lesson_parser.add_subparsers(dest="operation", help="Change lesson operations")
@@ -360,6 +364,16 @@ if __name__ == "__main__":
             "command": "get_lesson"
         }
         ok, resp = run_request_with_socket(get_lesson_request)
+        if not (ok and resp.get("success")):
+            sys.exit(1)
+    elif args.command == "classplan":
+        get_classplan_request = {
+            "version": 0,
+            "command": "get_classplan"
+        }
+        if args.date:
+            get_classplan_request["date"] = args.date
+        ok, resp = run_request_with_socket(get_classplan_request)
         if not (ok and resp.get("success")):
             sys.exit(1)
     elif args.command == "change_lesson":

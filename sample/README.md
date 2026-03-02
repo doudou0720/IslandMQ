@@ -300,7 +300,88 @@ context.term()
 ```
 </details>
 
-#### 5. change_lesson 命令
+#### 5. get_classplan 命令
+
+**功能**: 获取指定日期的课表信息。
+
+**JSON 请求格式**:
+```json
+{
+  "version": 0,
+  "command": "get_classplan",
+  "date": "2026-03-01"
+}
+```
+
+**参数说明**:
+- `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
+
+**响应**:
+
+<details>
+<summary>点击展开响应示例</summary>
+```json
+{
+  "success": true,
+  "message": "Class plan retrieved successfully",
+  "data": {
+    "Date": "2026-03-01",
+    "ClassPlan": {
+      "TimeLayoutId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "TimeRule": {
+        "WeekDay": 1,
+        "WeekRotation": 0,
+        "StartDate": "2024-01-01T00:00:00",
+        "EndDate": "2024-12-31T23:59:59"
+      },
+      "Name": "周一课表",
+      "IsOverlay": false,
+      "OverlaySourceId": null,
+      "OverlaySetupTime": "2024-01-01T00:00:00",
+      "IsEnabled": true,
+      "AssociatedGroup": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "AttachedObjects": {},
+      "IsActive": false,
+      "TimeLayout": {
+        "Name": "默认时间表",
+        "Layouts": [
+          {
+            "StartTime": "08:00:00",
+            "EndTime": "08:45:00",
+            "TimeType": 0,
+            "IsHideDefault": false,
+            "DefaultClassId": "00000000-0000-0000-0000-000000000000",
+            "BreakName": "",
+            "ActionSet": null,
+            "AttachedObjects": {},
+            "IsActive": false,
+            "Class": {
+              "SubjectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+              "IsChangedClass": false,
+              "IsEnabled": true,
+              "AttachedObjects": {},
+              "IsActive": false,
+              "Subject": {
+                "Name": "数学",
+                "Initial": "数",
+                "TeacherName": "张老师",
+                "IsOutDoor": false
+              }
+            }
+          }
+          // 更多时间点...
+        ]
+      }
+    }
+  },
+  "request_id": 1,
+  "status_code": 200,
+  "version": 0
+}
+```
+</details>
+
+#### 6. change_lesson 命令
 
 **功能**: 换课操作，支持替换、交换、批量替换和清除换课。
 
@@ -363,17 +444,17 @@ context.term()
 **参数说明**:
 
 ##### replace 操作参数
-- `class_index` (必填): 课程索引（从 0 开始）
+- `class_index` (必填): 课程列表索引（从 0 开始），对应 TimeType==0 的时间点
 - `subject_id` (必填): 新科目的 GUID
 - `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### swap 操作参数
-- `class_index1` (必填): 第一节课程的索引（从 0 开始）
-- `class_index2` (必填): 第二节课程的索引（从 0 开始）
+- `class_index1` (必填): 第一节课程的列表索引（从 0 开始），对应 TimeType==0 的时间点
+- `class_index2` (必填): 第二节课程的列表索引（从 0 开始），对应 TimeType==0 的时间点
 - `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### batch 操作参数
-- `changes` (必填): JSON 对象，键为课程索引，值为新科目的 GUID
+- `changes` (必填): JSON 对象，键为课程列表索引（对应 TimeType==0 的时间点），值为新科目的 GUID
 - `date` (可选): 日期（格式：YYYY-MM-DD），默认为今天
 
 ##### clear 操作参数
@@ -386,6 +467,8 @@ context.term()
 4. 批量替换的 JSON 格式必须正确
 5. 换课操作会创建临时课表，不会修改原始课表
 6. 换课后，课程的 `IsChangedClass` 字段会被设置为 `true`，用于在界面上高亮显示
+7. 课程索引对应的是课程列表索引，只对应 TimeType==0（上课类型）的时间点，不包括课间（TimeType==1）和其他类型（TimeType==2）
+7. 跨天换课请使用两次修改课程操作，分别指定日期
 
 
 ### 订阅事件消息

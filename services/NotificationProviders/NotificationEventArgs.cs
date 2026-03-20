@@ -1,10 +1,25 @@
 namespace IslandMQ.Services.NotificationProviders;
 
+/// <summary>
+/// 表示通知事件的数据载体，包含通知的标题、消息以及显示时长设置
+/// </summary>
 public class NotificationEventArgs : EventArgs
 {
+    /// <summary>
+    /// 获取通知的标题
+    /// </summary>
     public string Title { get; }
+    /// <summary>
+    /// 获取通知的消息内容
+    /// </summary>
     public string Message { get; }
+    /// <summary>
+    /// 获取遮罩显示的时长（秒）
+    /// </summary>
     public double MaskDuration { get; }
+    /// <summary>
+    /// 获取覆盖层显示的时长（秒）
+    /// </summary>
     public double OverlayDuration { get; }
 
     /// <summary>

@@ -29,6 +29,9 @@ public class NetMQREQServer : IDisposable
     private const int ResponseVersion = 0;
     
 
+    /// <summary>
+    /// 当服务器发生错误时触发的事件
+    /// </summary>
     public event EventHandler<Exception>? ErrorOccurred;
 
     /// <summary>

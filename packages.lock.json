@@ -4,7 +4,7 @@
     "net8.0": {
       "ClassIsland.PluginSdk": {
         "type": "Direct",
-        "requested": "[2.0.0, )",
+        "requested": "[2.0.0.1, )",
         "resolved": "2.0.0.1",
         "contentHash": "UblQ5AF+cZfekSUTpSmci0fNxcXCO92qXXNKbMXq1QpRtzWQV/vLHKI52ea+k7cy0RXqZonfik39NpouO/IqEw==",
         "dependencies": {

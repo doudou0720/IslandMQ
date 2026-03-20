@@ -19,10 +19,6 @@ public static class JsonParser
     public const int MAX_SUPPORTED_VERSION = 0;
     
     /// <summary>
-    /// 解析 JSON 字符串
-    /// </summary>
-    /// <param name="jsonString">要解析的 JSON 字符串</param>
-    /// <summary>
     /// 解析并验证包含版本字段的 JSON 字符串，并根据版本调度到对应的版本解析器。
     /// </summary>
     /// <param name="jsonString">根对象形式的 JSON 文本，必须包含名为 "version" 的整数属性。</param>

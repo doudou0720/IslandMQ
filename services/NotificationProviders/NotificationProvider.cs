@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace IslandMQ.Services.NotificationProviders;
 
+/// <summary>
+/// 提供基于 IslandMQ 的通知功能实现
+/// </summary>
 [NotificationProviderInfo("339502CA-8BE7-FFD9-474E-DBDBFA910E1D", "IslandMQ 提醒", "\uE708", "通过 IslandMQ 接收并显示提醒")]
 public class IslandMQNotificationProvider : NotificationProviderBase
 {

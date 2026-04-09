@@ -13,22 +13,64 @@ namespace IslandMQ;
 /// 该类实现了 IDisposable 接口，用于管理 NetMQ 发布者套接字和消息发布任务队列
 /// 支持异步消息发布，通过内部任务队列处理消息发布操作
 /// </remarks>
-public class NetMQPUBServer : IDisposable, IAsyncDisposable
+public class NetMQPUBServer : IDisposable
 {
+    /// <summary>
+    /// NetMQ发布者套接字实例
+    /// </summary>
     private PublisherSocket? _serverSocket;
+    /// <summary>
+    /// 服务器后台任务实例
+    /// </summary>
     private Task? _serverTask;
+    /// <summary>
+    /// 服务器运行状态标志
+    /// </summary>
     private volatile bool _isRunning;
+    /// <summary>
+    /// 启动尝试次数
+    /// </summary>
     private int _startAttempts;
+    /// <summary>
+    /// 最大启动尝试次数
+    /// </summary>
     private const int MaxStartAttempts = 3;
+    /// <summary>
+    /// 服务器绑定的端点地址
+    /// </summary>
     private readonly string _endpoint;
+    /// <summary>
+    /// 日志记录器实例
+    /// </summary>
     private readonly ILogger<NetMQPUBServer>? _logger;
+    /// <summary>
+    /// 线程退出事件，用于同步服务器停止操作
+    /// </summary>
     private readonly ManualResetEventSlim _threadExitEvent = new ManualResetEventSlim(true);
+    /// <summary>
+    /// 线程同步锁，用于保护服务器启动和停止操作
+    /// </summary>
     private readonly object _threadLock = new object();
+    /// <summary>
+    /// 实例释放状态标志
+    /// </summary>
     private volatile bool _disposed;
+    /// <summary>
+    /// 释放操作同步锁，用于保护释放过程
+    /// </summary>
     private readonly object _disposeLock = new object();
+    /// <summary>
+    /// 消息队列，用于存储待发布的消息
+    /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentQueue<string> _messageQueue = new();
+    /// <summary>
+    /// 用于取消服务器任务的令牌源
+    /// </summary>
+    private CancellationTokenSource? _cts;
 
-
+    /// <summary>
+    /// 当服务器发生错误时触发的事件
+    /// </summary>
     public event EventHandler<Exception>? ErrorOccurred;
 
     /// <summary>
@@ -63,19 +105,6 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
     /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
     public void Start()
     {
-        Task.Run(() => StartAsync()).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
-    /// 异步启动并运行后台 PUB 服务器任务以处理发布操作。
-    /// </summary>
-    /// <remarks>
-    /// 如果服务器已在运行则立即返回。若检测到先前的服务器任务仍在运行，会等待最多 3 秒以让其退出；若未退出则不会启动新的服务器任务。成功启动后会设置运行标志并创建执行 &lt;c&gt;RunServer&lt;/c&gt; 的后台任务。
-    /// 启动失败时会在10秒后重试，最多重试3次，三次失败后记录critical日志并停止重启操作。
-    /// </remarks>
-    /// <exception cref="ObjectDisposedException">当对象已被释放时抛出</exception>
-    public async Task StartAsync()
-    {
         CheckDisposed();
         lock (_threadLock)
         {
@@ -87,7 +116,6 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
             if (_serverTask != null && !_serverTask.IsCompleted)
             {
                 _logger?.LogWarning("Previous PUB server task still running, waiting for exit...");
-                bool waited = false;
                 bool isDisposed;
                 lock (_disposeLock)
                 {
@@ -97,36 +125,66 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                 {
                     try
                     {
-                        waited = _threadExitEvent.Wait(3000);
+                        var completedTask = Task.WhenAny(_serverTask, Task.Delay(3000)).GetAwaiter().GetResult();
+                        if (completedTask != _serverTask)
+                        {
+                            _logger?.LogError("Previous task still running, cannot start new PUB server.");
+                            return;
+                        }
                     }
-                    catch (ObjectDisposedException)
+                    catch (Exception ex)
                     {
-                        // 事件已被释放，视为已等待完成
-                        waited = true;
+                        _logger?.LogError(ex, "Error waiting for previous task to complete: {Message}", ex.Message);
+                        return;
                     }
-                }
-                if (!waited && !isDisposed)
-                {
-                    _logger?.LogError("Previous task still running, cannot start new PUB server.");
-                    return;
                 }
             }
 
             _isRunning = true;
             _startAttempts = 0;
-            _serverTask = RunServerWithRetry();
+
+            // 清理旧的 CancellationTokenSource
+            if (_cts != null)
+            {
+                try
+                {
+                    try
+                    {
+                        _cts.Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Error cancelling old CancellationTokenSource: {Message}", ex.Message);
+                    }
+
+                    try
+                    {
+                        _cts.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Error disposing old CancellationTokenSource: {Message}", ex.Message);
+                    }
+                }
+                finally
+                {
+                    _cts = null;
+                }
+            }
+
+            _cts = new CancellationTokenSource();
+            _serverTask = RunServerWithRetry(_cts.Token);
         }
-        // 添加 await 以消除警告，等待服务器启动完成
-        await Task.Yield();
     }
 
     /// <summary>
     /// 运行服务器并处理启动失败的重试逻辑。
     /// </summary>
+    /// <param name="cancellationToken">用于取消操作的令牌</param>
     /// <returns>表示异步操作的任务</returns>
-    private async Task RunServerWithRetry()
+    private async Task RunServerWithRetry(CancellationToken cancellationToken)
     {
-        while (_isRunning)
+        while (_isRunning && !cancellationToken.IsCancellationRequested)
         {
             try
             {
@@ -144,15 +202,27 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                 }
 
                 int currentAttempt = Interlocked.CompareExchange(ref _startAttempts, 0, 0);
-                if (currentAttempt >= MaxStartAttempts)
+                if (currentAttempt >= MaxStartAttempts || cancellationToken.IsCancellationRequested)
                 {
-                    _logger?.LogCritical(ex, "Failed to start PUB server after {Attempts} attempts, stopping restart operation.", currentAttempt);
+                    if (currentAttempt >= MaxStartAttempts)
+                    {
+                        _logger?.LogCritical(ex, "Failed to start PUB server after {Attempts} attempts, stopping restart operation.", currentAttempt);
+                    }
                     _isRunning = false;
                     break;
                 }
 
                 _logger?.LogError(ex, "PUB server failed to start (attempt {Attempts}/{MaxAttempts}), retrying in 10 seconds...", currentAttempt, MaxStartAttempts);
-                await Task.Delay(10000);
+                try
+                {
+                    await Task.Delay(10000, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    // 取消操作，退出重试循环
+                    _isRunning = false;
+                    break;
+                }
             }
         }
     }
@@ -166,9 +236,10 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
     /// - 若任务在等待后仍未结束，则调用 DisposeSocket 强制释放套接字以避免阻塞进程终止。
     /// - 最终会将 _serverTask 置为 null，不抛出异常（异常在调用处或通过事件上报）。
     /// </remarks>
-    private async Task StopInternalAsync()
+    private void StopInternal()
     {
         Task? serverTask = null;
+        CancellationTokenSource? cts = null;
         bool isDisposed = false;
 
         lock (_threadLock)
@@ -177,6 +248,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
             if (_serverTask != null && !_serverTask.IsCompleted)
             {
                 serverTask = _serverTask;
+                cts = _cts;
 
                 lock (_disposeLock)
                 {
@@ -190,6 +262,20 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
             bool needsForcedDispose = false;
             bool eventSignaled = false;
 
+            // 取消服务器任务
+            if (cts != null && !cts.IsCancellationRequested)
+            {
+                try
+                {
+                    cts.Cancel();
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error canceling server task: {Message}", ex.Message);
+                }
+            }
+
+            // 等待任务完成
             if (!isDisposed)
             {
                 try
@@ -208,7 +294,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                 _logger?.LogWarning("PUB server task did not signal exit within 2000ms, forcing wait.");
                 try
                 {
-                    var completedTask = await Task.WhenAny(serverTask, Task.Delay(5000)).ConfigureAwait(false);
+                    var completedTask = Task.WhenAny(serverTask, Task.Delay(5000)).GetAwaiter().GetResult();
                     if (completedTask != serverTask)
                     {
                         _logger?.LogError("PUB server task still running after 5000ms, proceeding with socket disposal.");
@@ -231,6 +317,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                 if (_serverTask == serverTask)
                 {
                     _serverTask = null;
+                    _cts = null;
                 }
             }
         }
@@ -243,17 +330,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
     public void Stop()
     {
         CheckDisposed();
-        Task.Run(() => StopInternalAsync()).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
-    /// 异步停止服务器并等待其优雅退出。
-    /// </summary>
-    /// <exception cref="ObjectDisposedException">当实例已被释放时抛出。</exception>
-    public async Task StopAsync()
-    {
-        CheckDisposed();
-        await StopInternalAsync();
+        StopInternal();
     }
 
 
@@ -282,7 +359,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
 
             _logger?.LogInformation("NetMQ PUB server started at {Endpoint}", _endpoint);
 
-            while (_isRunning)
+            while (_isRunning && !(_cts?.Token.IsCancellationRequested ?? false))
             {
                 try
                 {
@@ -291,7 +368,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                         try
                         {
                             var socket = Volatile.Read(ref _serverSocket);
-                            if (socket != null && _isRunning)
+                            if (socket != null && _isRunning && !(_cts?.Token.IsCancellationRequested ?? false))
                             {
                                 socket.SendFrame(message);
                                 _logger?.LogInformation("Published: {Message}", message);
@@ -309,7 +386,16 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                     }
                     else
                     {
-                        await Task.Delay(10);
+                        try
+                        {
+                            await Task.Delay(10, _cts?.Token ?? CancellationToken.None);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            // 取消操作，退出循环
+                            _isRunning = false;
+                            break;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -320,7 +406,16 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
                     }
                     ErrorOccurred?.Invoke(this, ex);
                     _logger?.LogError(ex, "Error: {Message}", ex.Message);
-                    await Task.Delay(100);
+                    try
+                    {
+                        await Task.Delay(100, _cts?.Token ?? CancellationToken.None);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // 取消操作，退出循环
+                        _isRunning = false;
+                        break;
+                    }
                 }
             }
         }
@@ -402,19 +497,8 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
     /// <remarks>
     /// 调用会触发内部停止逻辑、释放用于线程同步的退出事件，并抑制终结器以避免重复释放。
     /// </remarks>
+    // 注意：使用同步方法关闭服务器，确保插件关闭时的可靠性
     public void Dispose()
-    {
-        Task.Run(() => DisposeAsync().AsTask()).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
-    /// 异步停止服务器（如果正在运行）、释放内部托管资源并将实例标记为已释放；可安全重复调用。
-    /// </summary>
-    /// <remarks>
-    /// 调用会触发内部停止逻辑、释放用于线程同步的退出事件，并抑制终结器以避免重复释放。
-    /// </remarks>
-    /// <returns>表示异步操作的任务</returns>
-    public async ValueTask DisposeAsync()
     {
         lock (_disposeLock)
         {
@@ -424,7 +508,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
             }
         }
 
-        await StopInternalAsync().ConfigureAwait(false);
+        StopInternal();
 
         lock (_disposeLock)
         {
@@ -434,6 +518,7 @@ public class NetMQPUBServer : IDisposable, IAsyncDisposable
             }
             _disposed = true;
             _threadExitEvent.Dispose();
+            _cts?.Dispose();
         }
 
         GC.SuppressFinalize(this);

@@ -7,10 +7,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>True</EnableDynamicLoading>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**</DefaultItemExcludes>
     </PropertyGroup>
 
     <PropertyGroup>
-        <ClassIslandPluginSdkVersion>2.0.0.0</ClassIslandPluginSdkVersion>
+        <ClassIslandPluginSdkVersion>2.0.0.1</ClassIslandPluginSdkVersion>
     </PropertyGroup>
 
     <ItemGroup>

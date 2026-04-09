@@ -14,6 +14,9 @@ namespace IslandMQ.Utils
     {
         private static readonly ILogger? _logger = IAppHost.GetService<ILogger<Plugin>>();
 
+        /// <summary>
+        /// 当请求发送通知时触发的事件
+        /// </summary>
         public static event EventHandler<NotificationEventArgs>? NotificationRequested;
 
         /// <summary>

@@ -8,7 +8,7 @@ name: IslandMQ
 description: 适用于ClassIsland 2.x的多操作系统远程API调用插件
 entranceAssembly: "IslandMQ.dll"
 url: https://github.com/doudou0720/IslandMQ
-version: 0.0.1.0
+version: 0.0.1.1
 apiVersion: 2.0.0.0
 author: doudou0720
 repoOwner: doudou0720

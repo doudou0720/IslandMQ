@@ -232,7 +232,7 @@ public class NetMQPUBServer : IDisposable
     /// </summary>
     /// <remarks>
     /// - 在 _threadLock 下执行以保证线程安全。
-    /// - 如果后台任务仍然运行，会尝试以最多 5000ms 的等待任务完成。
+    /// - 如果后台任务仍然运行，会等待最多 2000ms 的退出信号；若未收到信号，会尝试以最多 5000ms 的等待任务完成。
     /// - 若任务在等待后仍未结束，则调用 DisposeSocket 强制释放套接字以避免阻塞进程终止。
     /// - 最终会将 _serverTask 置为 null，不抛出异常（异常在调用处或通过事件上报）。
     /// </remarks>
@@ -260,6 +260,7 @@ public class NetMQPUBServer : IDisposable
         if (serverTask != null)
         {
             bool needsForcedDispose = false;
+            bool eventSignaled = false;
 
             // 取消服务器任务
             if (cts != null && !cts.IsCancellationRequested)
@@ -277,7 +278,20 @@ public class NetMQPUBServer : IDisposable
             // 等待任务完成
             if (!isDisposed)
             {
-                _logger?.LogInformation("Waiting for PUB server task to complete...");
+                try
+                {
+                    eventSignaled = _threadExitEvent.Wait(2000);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // 事件已被释放，视为已等待完成
+                    eventSignaled = true;
+                }
+            }
+
+            if (!eventSignaled && !isDisposed)
+            {
+                _logger?.LogWarning("PUB server task did not signal exit within 2000ms, forcing wait.");
                 try
                 {
                     var completedTask = Task.WhenAny(serverTask, Task.Delay(5000)).GetAwaiter().GetResult();

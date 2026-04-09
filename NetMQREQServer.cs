@@ -27,11 +27,18 @@ public class NetMQREQServer : IDisposable
     private readonly object _disposeLock = new object();
     private long _requestIdCounter = 0;
     private const int ResponseVersion = 0;
-    
+
 
     /// <summary>
     /// 当服务器发生错误时触发的事件
     /// </summary>
+    /// <remarks>
+    /// 此事件在以下场景中会被触发：
+    /// - 消息处理过程中发生非致命异常
+    /// - 服务器初始化过程中发生错误
+    /// - 运行时出现网络或套接字相关错误
+    /// 订阅此事件以处理和记录服务器运行过程中的异常情况。
+    /// </remarks>
     public event EventHandler<Exception>? ErrorOccurred;
 
     /// <summary>
@@ -43,7 +50,7 @@ public class NetMQREQServer : IDisposable
         _logger = IAppHost.GetService<ILogger<IslandMQ.NetMQREQServer>>();
         _endpoint = endpoint;
     }
-    
+
     /// <summary>
     /// 生成并返回下一个唯一的请求标识，确保在并发环境中递增不会冲突。
     /// </summary>
@@ -123,10 +130,10 @@ public class NetMQREQServer : IDisposable
     /// 停止并清理服务器后台线程的内部实现：停止循环标志、等待线程退出并根据超时强制释放套接字，然后清除线程引用。
     /// </summary>
     /// <remarks>
-    /// - 将 _isRunning 设为 false，通知服务器循环停止。  
-    /// - 在 _threadLock 保护下操作线程引用和等待逻辑，保证并发安全。  
-    /// - 若存在活动线程，优先等待最多 2000ms 的 _threadExitEvent 信号（若对象已被释放则视为已退出）；若未收到信号，再尝试阻塞 Join 最多 5000ms。  
-    /// - 若线程在上述等待后仍未退出，则调用 DisposeSocket 强制释放底层套接字以促使线程终止。  
+    /// - 将 _isRunning 设为 false，通知服务器循环停止。
+    /// - 在 _threadLock 保护下操作线程引用和等待逻辑，保证并发安全。
+    /// - 若存在活动线程，优先等待最多 2000ms 的 _threadExitEvent 信号（若对象已被释放则视为已退出）；若未收到信号，再尝试阻塞 Join 最多 5000ms。
+    /// - 若线程在上述等待后仍未退出，则调用 DisposeSocket 强制释放底层套接字以促使线程终止。
     /// - 最终将 _serverThread 设为 null。
     /// </remarks>
     private void StopInternal()
@@ -137,7 +144,7 @@ public class NetMQREQServer : IDisposable
             if (_serverThread != null)
             {
                 bool needsForcedDispose = false;
-                
+
                 if (_serverThread.IsAlive)
                 {
                     bool eventSignaled = false;
@@ -146,7 +153,7 @@ public class NetMQREQServer : IDisposable
                     {
                         isDisposed = _disposed;
                     }
-                    
+
                     if (!isDisposed)
                     {
                         try
@@ -159,7 +166,7 @@ public class NetMQREQServer : IDisposable
                             eventSignaled = true;
                         }
                     }
-                    
+
                     if (!eventSignaled && !isDisposed)
                     {
                         _logger?.LogWarning("Server thread did not signal exit within 2000ms, forcing join.");
@@ -170,17 +177,17 @@ public class NetMQREQServer : IDisposable
                         }
                     }
                 }
-                
+
                 if (needsForcedDispose)
                 {
                     DisposeSocket();
                 }
-                
+
                 _serverThread = null;
             }
         }
     }
-    
+
     /// <summary>
     /// 停止正在运行的 NetMQ 响应服务器并等待后台线程安全退出。
     /// </summary>
@@ -192,7 +199,7 @@ public class NetMQREQServer : IDisposable
     }
 
 
-    
+
     /// <summary>
     /// 在后台线程中运行 NetMQ 响应服务器：绑定到配置的端点，循环接收请求、处理并发送响应，并在结束时释放资源与通知线程退出信号。
     /// </summary>
@@ -209,7 +216,7 @@ public class NetMQREQServer : IDisposable
             }
             _threadExitEvent.Reset();
         }
-        
+
         try
         {
             _serverSocket = new ResponseSocket();
@@ -219,7 +226,7 @@ public class NetMQREQServer : IDisposable
 
             while (_isRunning)
             {
-                
+
                 try
                 {
                     var socket = Volatile.Read(ref _serverSocket);
@@ -227,7 +234,7 @@ public class NetMQREQServer : IDisposable
                     {
                         // 生成请求ID
                         long requestId = GetNextRequestId();
-                        
+
                         _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
 
                         var response = ProcessMessage(message, requestId);
@@ -280,16 +287,16 @@ public class NetMQREQServer : IDisposable
         {
             // 解析JSON消息
             var parseResult = JsonParser.Parse(message);
-            
+
             if (!parseResult.Success)
             {
                 // 返回错误响应
                 return CreateErrorResponse(parseResult.ErrorMessage ?? "Unknown error", requestId);
             }
-            
+
             // 调用API助手处理请求
             var apiResult = ClassIslandAPIHelper.ProcessRequest(parseResult.ParsedData!.Value);
-            
+
             // 根据StatusCode决定返回成功还是错误响应
             if (apiResult.StatusCode >= 200 && apiResult.StatusCode < 300)
             {
@@ -312,7 +319,7 @@ public class NetMQREQServer : IDisposable
             return CreateErrorResponse("Internal server error", requestId);
         }
     }
-    
+
     /// <summary>
     /// 构建并序列化一个表示成功响应的 JSON 字符串。
     /// </summary>
@@ -332,10 +339,10 @@ public class NetMQREQServer : IDisposable
             status_code = statusCode,
             version = ResponseVersion
         };
-        
+
         return JsonSerializer.Serialize(response);
     }
-    
+
     /// <summary>
     /// 构建一个包含错误信息的标准响应对象并将其序列化为 JSON 字符串。
     /// </summary>
@@ -354,7 +361,7 @@ public class NetMQREQServer : IDisposable
             status_code = statusCode,
             version = ResponseVersion
         };
-        
+
         return JsonSerializer.Serialize(response);
     }
 
@@ -393,9 +400,9 @@ public class NetMQREQServer : IDisposable
                 return;
             }
         }
-        
+
         StopInternal();
-        
+
         lock (_disposeLock)
         {
             if (_disposed)
@@ -405,7 +412,7 @@ public class NetMQREQServer : IDisposable
             _disposed = true;
             _threadExitEvent.Dispose();
         }
-        
+
         GC.SuppressFinalize(this);
     }
 }

@@ -58,3 +58,6 @@ nunit-*.xml
 .idea/
 
 cipx/
+
+# ClassIsland For Reference
+ClassIsland/

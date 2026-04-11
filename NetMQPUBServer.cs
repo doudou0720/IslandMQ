@@ -275,6 +275,9 @@ public class NetMQPUBServer : IDisposable
                 }
             }
 
+            // 立即设置退出信号，让任务尽快退出
+            _threadExitEvent.Set();
+
             // 等待任务完成
             if (!isDisposed)
             {
@@ -355,6 +358,7 @@ public class NetMQPUBServer : IDisposable
         try
         {
             _serverSocket = new PublisherSocket();
+            _serverSocket.Options.Linger = TimeSpan.Zero;
             _serverSocket.Bind(_endpoint);
 
             _logger?.LogInformation("NetMQ PUB server started at {Endpoint}", _endpoint);
@@ -388,7 +392,8 @@ public class NetMQPUBServer : IDisposable
                     {
                         try
                         {
-                            await Task.Delay(10, _cts?.Token ?? CancellationToken.None);
+                            // 使用更短的延迟时间，确保能够及时响应取消请求
+                            await Task.Delay(5, _cts?.Token ?? CancellationToken.None);
                         }
                         catch (TaskCanceledException)
                         {
@@ -408,7 +413,8 @@ public class NetMQPUBServer : IDisposable
                     _logger?.LogError(ex, "Error: {Message}", ex.Message);
                     try
                     {
-                        await Task.Delay(100, _cts?.Token ?? CancellationToken.None);
+                        // 使用更短的延迟时间，确保能够及时响应取消请求
+                        await Task.Delay(50, _cts?.Token ?? CancellationToken.None);
                     }
                     catch (TaskCanceledException)
                     {
@@ -427,6 +433,7 @@ public class NetMQPUBServer : IDisposable
             }
             ErrorOccurred?.Invoke(this, ex);
             _logger?.LogError(ex, "PUB server error: {Message}", ex.Message);
+            throw;
         }
         finally
         {
@@ -480,6 +487,14 @@ public class NetMQPUBServer : IDisposable
         var socket = Interlocked.Exchange(ref _serverSocket, null);
         if (socket != null)
         {
+            try
+            {
+                socket.Close();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error closing PUB socket: {Message}", ex.Message);
+            }
             try
             {
                 socket.Dispose();

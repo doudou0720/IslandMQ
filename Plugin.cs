@@ -36,10 +36,10 @@ public class Plugin : PluginBase
         services.AddSingleton<NetMQREQServer>();
         services.AddSingleton<NetMQPUBServer>();
 
-        
+
         var app = AppBase.Current;
         // Start/Stop Server
-        app.AppStarted += (_, _) => 
+        app.AppStarted += (_, _) =>
         {
             _logger = IAppHost.GetService<ILogger<IslandMQ.Plugin>>();
             StartNetMqReqServer();
@@ -188,7 +188,6 @@ public class Plugin : PluginBase
             }
             _netMqPubServer.ErrorOccurred += OnNetMqPubServerError;
             _netMqPubServer.Start();
-            _logger?.LogInformation("NetMQ PUB server started successfully!");
         }
         catch (Exception ex)
         {

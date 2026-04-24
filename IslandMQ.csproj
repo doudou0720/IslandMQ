@@ -19,7 +19,7 @@
         <PackageReference Include="ClassIsland.PluginSdk" Version="$(ClassIslandPluginSdkVersion)">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
-        <PackageReference Include="NetMQ" Version="4.0.2.2" />
+        <PackageReference Include="NetMQ" Version="4.0.4" />
         <PackageReference Include="JsonSchema.Net" Version="9.1.4" />
     </ItemGroup>
 

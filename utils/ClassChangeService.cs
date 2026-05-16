@@ -15,6 +15,9 @@ namespace IslandMQ.Utils
         /// <summary>
         /// 替换单节课程
         /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="classIndex">课程索引</param>
+        /// <param name="newSubjectId">新课程科目ID</param>
         public void ReplaceClass(DateTime date, int classIndex, Guid newSubjectId)
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -29,13 +32,19 @@ namespace IslandMQ.Utils
             }
         }
 
+        /// <summary>
+        /// 执行替换单节课程的内部逻辑
+        /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="classIndex">课程索引</param>
+        /// <param name="newSubjectId">新课程科目ID</param>
         private void ExecuteReplaceClass(DateTime date, int classIndex, Guid newSubjectId)
         {
             // 获取指定日期的课表
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
+                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
             }
 
             // 如果是覆盖层，使用原始课表ID
@@ -69,6 +78,9 @@ namespace IslandMQ.Utils
         /// <summary>
         /// 交换两节课程
         /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="classIndex1">第一节课程索引</param>
+        /// <param name="classIndex2">第二节课程索引</param>
         public void SwapClasses(DateTime date, int classIndex1, int classIndex2)
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -83,12 +95,18 @@ namespace IslandMQ.Utils
             }
         }
 
+        /// <summary>
+        /// 执行交换两节课程的内部逻辑
+        /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="classIndex1">第一节课程索引</param>
+        /// <param name="classIndex2">第二节课程索引</param>
         private void ExecuteSwapClasses(DateTime date, int classIndex1, int classIndex2)
         {
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
+                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
             }
 
             // 如果是覆盖层，使用原始课表ID
@@ -114,6 +132,8 @@ namespace IslandMQ.Utils
         /// <summary>
         /// 批量替换课程
         /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="changes">课程索引到新科目ID的映射字典</param>
         public void BatchReplaceClasses(DateTime date, Dictionary<int, Guid> changes)
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -128,12 +148,17 @@ namespace IslandMQ.Utils
             }
         }
 
+        /// <summary>
+        /// 执行批量替换课程的内部逻辑
+        /// </summary>
+        /// <param name="date">课程日期</param>
+        /// <param name="changes">课程索引到新科目ID的映射字典</param>
         private void ExecuteBatchReplaceClasses(DateTime date, Dictionary<int, Guid> changes)
         {
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentNullException(nameof(classPlanId), "未找到指定日期的课表");
+                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
             }
 
             // 如果是覆盖层，使用原始课表ID
@@ -178,6 +203,7 @@ namespace IslandMQ.Utils
         /// <summary>
         /// 清除换课（恢复原始课表）
         /// </summary>
+        /// <param name="date">课程日期</param>
         public void ClearClassChanges(DateTime date)
         {
             if (Dispatcher.UIThread.CheckAccess())

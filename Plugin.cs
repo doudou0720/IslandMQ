@@ -4,6 +4,7 @@ using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Extensions.Registry;
 using ClassIsland.Shared;
+using IslandMQ.Services;
 using IslandMQ.Services.NotificationProviders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,6 +25,7 @@ public class Plugin : PluginBase
     private NetMQPUBServer? _netMqPubServer;
     private ILessonsService? _lessonsService;
     private ILogger<IslandMQ.Plugin>? _logger;
+    private IslandMQSettingsService? _settingsService;
 
     /// <summary>
     /// 配置并注册 IslandMQ 插件所需的服务，并在应用启动和停止时初始化/停止 NetMQ 服务器并注册/注销课表事件处理器。
@@ -32,16 +34,15 @@ public class Plugin : PluginBase
     /// <param name="services">用于注册通知提供者和 NetMQ 服务器实例的依赖注入服务集合。</param>
     public override void Initialize(HostBuilderContext context, IServiceCollection services)
     {
+        services.AddSingleton<IslandMQSettingsService>();
+        services.AddSettingsPage<Settings.IslandMQSettingsPage>();
         services.AddNotificationProvider<IslandMQNotificationProvider>();
-        services.AddSingleton<NetMQREQServer>();
-        services.AddSingleton<NetMQPUBServer>();
-
 
         var app = AppBase.Current;
-        // Start/Stop Server
         app.AppStarted += (_, _) =>
         {
             _logger = IAppHost.GetService<ILogger<IslandMQ.Plugin>>();
+            _settingsService = IAppHost.GetService<IslandMQSettingsService>();
             StartNetMqReqServer();
             StartNetMqPubServer();
             RegisterLessonEvents();
@@ -134,9 +135,16 @@ public class Plugin : PluginBase
     /// </remarks>
     private void StartNetMqReqServer()
     {
+        if (_settingsService == null || !_settingsService.Settings.IsReqServerEnabled)
+        {
+            _logger?.LogInformation("REQ server is disabled in settings.");
+            return;
+        }
+
         try
         {
-            _netMqReqServer = IAppHost.GetService<NetMQREQServer>();
+            var endpoint = $"tcp://{_settingsService.Settings.ServerIp}:{_settingsService.Settings.ReqServerPort}";
+            _netMqReqServer = new NetMQREQServer(endpoint);
             if (_netMqReqServer == null)
             {
                 _logger?.LogError("Failed to start NetMQ server: NetMQREQService is not available!");
@@ -144,11 +152,11 @@ public class Plugin : PluginBase
             }
             _netMqReqServer.ErrorOccurred += OnNetMqReqServerError;
             _netMqReqServer.Start();
-            _logger?.LogInformation("NetMQ server started successfully!");
+            _logger?.LogInformation("NetMQ REQ server started at {Endpoint}", endpoint);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to start NetMQ server: {Message}", ex.Message);
+            _logger?.LogError(ex, "Failed to start NetMQ REQ server: {Message}", ex.Message);
         }
     }
 
@@ -178,9 +186,16 @@ public class Plugin : PluginBase
     /// </summary>
     private void StartNetMqPubServer()
     {
+        if (_settingsService == null || !_settingsService.Settings.IsPubServerEnabled)
+        {
+            _logger?.LogInformation("PUB server is disabled in settings.");
+            return;
+        }
+
         try
         {
-            _netMqPubServer = IAppHost.GetService<NetMQPUBServer>();
+            var endpoint = $"tcp://{_settingsService.Settings.ServerIp}:{_settingsService.Settings.PubServerPort}";
+            _netMqPubServer = new NetMQPUBServer(endpoint);
             if (_netMqPubServer == null)
             {
                 _logger?.LogError("Failed to start NetMQ PUB server: NetMQPUBServer is not available!");
@@ -188,6 +203,7 @@ public class Plugin : PluginBase
             }
             _netMqPubServer.ErrorOccurred += OnNetMqPubServerError;
             _netMqPubServer.Start();
+            _logger?.LogInformation("NetMQ PUB server started at {Endpoint}", endpoint);
         }
         catch (Exception ex)
         {

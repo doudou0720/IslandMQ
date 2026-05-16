@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:IslandMQ.ViewModels"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="IslandMQ.Settings.IslandMQSettingsPage"
+             x:DataType="vm:IslandMQSettingsViewModel">
+    <Grid>
+        <fa:NavigationView x:Name="MainNavigation"
+                           PaneDisplayMode="Auto"
+                           IsSettingsVisible="False"
+                           OpenPaneLength="240"
+                           ItemInvoked="MainNavigation_ItemInvoked">
+            <fa:NavigationView.MenuItems>
+                <fa:NavigationViewItem Content="基本设置" Tag="basic">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:FontIconSource Glyph="&#xE80F;"/>
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="关于" Tag="about">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:FontIconSource Glyph="&#xE946;"/>
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+            </fa:NavigationView.MenuItems>
+            
+            <ScrollViewer Padding="16" VerticalScrollBarVisibility="Auto">
+                <ContentControl Content="{Binding CurrentContent}"/>
+            </ScrollViewer>
+        </fa:NavigationView>
+    </Grid>
+</UserControl>

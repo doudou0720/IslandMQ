@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:IslandMQ.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="IslandMQ.Settings.AboutControl"
+             x:DataType="vm:IslandMQSettingsViewModel">
+    <StackPanel Spacing="16" Margin="24">
+        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="12"
+                Padding="24">
+            <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <Border Width="80" Height="80" 
+                            CornerRadius="16" 
+                            Background="{DynamicResource AccentColorBrush}"/>
+                    <StackPanel>
+                        <TextBlock Text="IslandMQ" 
+                                   FontSize="20" 
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="版本: 0.0.1.2"
+                                   FontSize="14"
+                                   Opacity="0.6"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Border Background="{DynamicResource SystemControlBackgroundAccentBrush}"
+                        CornerRadius="8"
+                        Padding="16">
+                    <TextBlock Text="适用于 ClassIsland 2.x 的多操作系统远程 API 调用插件"
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               Opacity="0.8"/>
+                </Border>
+
+                <StackPanel Spacing="12">
+                    <TextBlock Text="基于 NetMQ 实现的轻量级消息队列服务"
+                               Opacity="0.7"
+                               FontSize="13"/>
+                    <TextBlock Text="支持请求/响应和发布/订阅两种通信模式"
+                               Opacity="0.7"
+                               FontSize="13"/>
+                    <TextBlock Text="跨平台支持，可在 Windows、Linux、macOS 上运行"
+                               Opacity="0.7"
+                               FontSize="13"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="12"
+                Padding="24">
+            <StackPanel Spacing="12">
+                <TextBlock Text="协议端口"
+                           FontSize="16"
+                           FontWeight="SemiBold"/>
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="16" 
+                                HorizontalAlignment="Stretch">
+                        <StackPanel>
+                            <TextBlock Text="REQ 服务器" 
+                                       FontSize="14"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="请求/响应模式"
+                                       FontSize="12"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ReqServerPort}" 
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="16" 
+                                HorizontalAlignment="Stretch">
+                        <StackPanel>
+                            <TextBlock Text="PUB 服务器" 
+                                       FontSize="14"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="发布/订阅模式"
+                                       FontSize="12"
+                                       Opacity="0.6"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding PubServerPort}" 
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

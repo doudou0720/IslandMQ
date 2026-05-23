@@ -29,15 +29,13 @@
                     <ci:FluentIconSource Glyph="&#xE946;"/>
                 </fa:SettingsExpander.IconSource>
                 <fa:SettingsExpander.Footer>
-                    <TextBlock Text="版本: 0.0.1.2"
+                    <TextBlock Text="{Binding PluginVersion, StringFormat='版本: {0}'}"
                            FontSize="12"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 </fa:SettingsExpander.Footer>
-                <fa:SettingsExpanderItem Content="支持请求/响应 (REQ) 通信模式">
+                <fa:SettingsExpanderItem Content="Copyright © 2026 doudou0720">
                 </fa:SettingsExpanderItem>
-                <fa:SettingsExpanderItem Content="支持发布/订阅 (PUB/SUB) 通信模式">
-                </fa:SettingsExpanderItem>
-                <fa:SettingsExpanderItem Content="跨平台支持，可在 Windows、Linux、macOS 上运行">
+                <fa:SettingsExpanderItem Content="License: AGPL 3.0">
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>
 
@@ -66,18 +64,6 @@
                                        FontWeight="SemiBold"/>
                         </StackPanel>
                     </fa:SettingsExpanderItem.Footer>
-                </fa:SettingsExpanderItem>
-            </fa:SettingsExpander>
-
-            <!-- 版权信息 -->
-            <fa:SettingsExpander Header="版权信息"
-                             Description="开源许可证和作者信息">
-                <fa:SettingsExpander.IconSource>
-                    <ci:FluentIconSource Glyph="&#xE8D4;"/>
-                </fa:SettingsExpander.IconSource>
-                <fa:SettingsExpanderItem Content="Copyright © 2026 doudou0720">
-                </fa:SettingsExpanderItem>
-                <fa:SettingsExpanderItem Content="License: GPL 3.0">
                 </fa:SettingsExpanderItem>
             </fa:SettingsExpander>
         </StackPanel>

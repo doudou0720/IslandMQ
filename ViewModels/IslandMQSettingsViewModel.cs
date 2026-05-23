@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using IslandMQ.Models;
 
 namespace IslandMQ.ViewModels;
@@ -53,7 +54,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
             {
                 _settings.ServerIp = value;
                 OnPropertyChanged();
-                Save();
+                OnPropertyChanged(nameof(HasChanges));
             }
         }
     }
@@ -71,7 +72,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 _settings.IsReqServerEnabled = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsReqServerSettingsVisible));
-                Save();
+                OnPropertyChanged(nameof(HasChanges));
             }
         }
     }
@@ -93,7 +94,9 @@ public partial class IslandMQSettingsViewModel : ObservableObject
             {
                 _settings.ReqServerPort = value;
                 OnPropertyChanged();
-                Save();
+                OnPropertyChanged(nameof(PortConflictError));
+                OnPropertyChanged(nameof(CanSave));
+                HasChanges = true;
             }
         }
     }
@@ -111,7 +114,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 _settings.IsPubServerEnabled = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPubServerSettingsVisible));
-                Save();
+                OnPropertyChanged(nameof(HasChanges));
             }
         }
     }
@@ -133,16 +136,75 @@ public partial class IslandMQSettingsViewModel : ObservableObject
             {
                 _settings.PubServerPort = value;
                 OnPropertyChanged();
-                Save();
+                OnPropertyChanged(nameof(PortConflictError));
+                OnPropertyChanged(nameof(CanSave));
+                HasChanges = true;
             }
         }
     }
 
     /// <summary>
-    /// 执行保存操作。
+    /// 获取或设置插件版本号。
     /// </summary>
+    public string PluginVersion { get; } = typeof(IslandMQSettingsViewModel).Assembly.GetName().Version?.ToString() ?? "未知";
+
+    /// <summary>
+    /// 获取是否有未保存的更改。
+    /// </summary>
+    public bool HasChanges { get; private set; }
+
+    /// <summary>
+    /// 获取端口冲突错误信息，如果没有冲突则为空。
+    /// </summary>
+    public string PortConflictError
+    {
+        get
+        {
+            if (IsReqServerEnabled && IsPubServerEnabled && ReqServerPort == PubServerPort)
+            {
+                return "REQ 和 PUB 端口不能相同";
+            }
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 获取是否可以保存（没有冲突且有更改）。
+    /// </summary>
+    public bool CanSave => string.IsNullOrEmpty(PortConflictError) && HasChanges;
+
+    /// <summary>
+    /// 保存设置。
+    /// </summary>
+    [RelayCommand]
     private void Save()
     {
-        _saveAction?.Invoke();
+        if (string.IsNullOrEmpty(PortConflictError))
+        {
+            _saveAction?.Invoke();
+            HasChanges = false;
+            OnPropertyChanged(nameof(CanSave));
+        }
+    }
+
+    /// <summary>
+    /// 重置为默认值。
+    /// </summary>
+    [RelayCommand]
+    private void Reset()
+    {
+        _settings.ServerIp = "0.0.0.0";
+        _settings.IsReqServerEnabled = true;
+        _settings.ReqServerPort = 5555;
+        _settings.IsPubServerEnabled = true;
+        _settings.PubServerPort = 5556;
+        HasChanges = true;
+        OnPropertyChanged(nameof(ServerIp));
+        OnPropertyChanged(nameof(IsReqServerEnabled));
+        OnPropertyChanged(nameof(ReqServerPort));
+        OnPropertyChanged(nameof(IsPubServerEnabled));
+        OnPropertyChanged(nameof(PubServerPort));
+        OnPropertyChanged(nameof(PortConflictError));
+        OnPropertyChanged(nameof(CanSave));
     }
 }

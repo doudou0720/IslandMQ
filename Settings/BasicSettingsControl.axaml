@@ -66,5 +66,33 @@
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
         </fa:SettingsExpander>
+
+        <!-- 错误提示 -->
+        <Border IsVisible="{Binding PortConflictError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#20FF0000"
+                CornerRadius="4"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ci:FluentIcon Glyph="&#xE783;"
+                               Foreground="#FF4444"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding PortConflictError}"
+                           Foreground="#FF4444"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 操作按钮 -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button Content="重置"
+                    Command="{Binding ResetCommand}"
+                    Padding="16,8"/>
+            <Button Content="保存"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding CanSave}"
+                    Classes="accent"
+                    Padding="16,8"/>
+        </StackPanel>
     </StackPanel>
 </UserControl>

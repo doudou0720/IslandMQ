@@ -49,4 +49,16 @@ public class IslandMQSettings
     /// </summary>
     [JsonPropertyName("httpServerPort")]
     public int HttpServerPort { get; set; } = 8080;
+
+    /// <summary>
+    /// 获取或设置是否启用 CORS（跨域资源共享）。
+    /// </summary>
+    [JsonPropertyName("isCorsEnabled")]
+    public bool IsCorsEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 获取或设置允许的 CORS 来源（用逗号分隔，空表示仅允许同源）。
+    /// </summary>
+    [JsonPropertyName("corsAllowedOrigins")]
+    public string CorsAllowedOrigins { get; set; } = "";
 }

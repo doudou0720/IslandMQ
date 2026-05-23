@@ -190,6 +190,46 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 获取或设置是否启用 CORS。
+    /// </summary>
+    public bool IsCorsEnabled
+    {
+        get => _settings.IsCorsEnabled;
+        set
+        {
+            if (_settings.IsCorsEnabled != value)
+            {
+                _settings.IsCorsEnabled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsCorsSettingsVisible));
+                OnPropertyChanged(nameof(HasChanges));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取 CORS 设置是否可见。
+    /// </summary>
+    public bool IsCorsSettingsVisible => IsHttpServerEnabled && IsCorsEnabled;
+
+    /// <summary>
+    /// 获取或设置允许的 CORS 来源。
+    /// </summary>
+    public string CorsAllowedOrigins
+    {
+        get => _settings.CorsAllowedOrigins;
+        set
+        {
+            if (_settings.CorsAllowedOrigins != value)
+            {
+                _settings.CorsAllowedOrigins = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasChanges));
+            }
+        }
+    }
+
+    /// <summary>
     /// 获取或设置插件版本号。
     /// </summary>
     public string PluginVersion { get; } = typeof(IslandMQSettingsViewModel).Assembly.GetName().Version?.ToString() ?? "未知";
@@ -246,6 +286,8 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         _settings.PubServerPort = 5556;
         _settings.IsHttpServerEnabled = false;
         _settings.HttpServerPort = 8080;
+        _settings.IsCorsEnabled = false;
+        _settings.CorsAllowedOrigins = "";
         HasChanges = true;
         OnPropertyChanged(nameof(ServerIp));
         OnPropertyChanged(nameof(IsReqServerEnabled));
@@ -254,6 +296,8 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(PubServerPort));
         OnPropertyChanged(nameof(IsHttpServerEnabled));
         OnPropertyChanged(nameof(HttpServerPort));
+        OnPropertyChanged(nameof(IsCorsEnabled));
+        OnPropertyChanged(nameof(CorsAllowedOrigins));
         OnPropertyChanged(nameof(PortConflictError));
         OnPropertyChanged(nameof(CanSave));
     }

@@ -23,6 +23,8 @@ public class SiskHttpServer : IDisposable
     private readonly ushort _port;
     private readonly string _host;
     private readonly ILogger<SiskHttpServer>? _logger;
+    private readonly bool _isCorsEnabled;
+    private readonly string _corsAllowedOrigins;
     private readonly ConcurrentDictionary<string, HttpWebSocket> _wsConnections = new();
     private volatile bool _isRunning;
     private volatile bool _disposed;
@@ -40,10 +42,14 @@ public class SiskHttpServer : IDisposable
     /// </summary>
     /// <param name="host">服务器绑定地址，默认 "127.0.0.1"</param>
     /// <param name="port">服务器监听端口，默认 8080</param>
-    public SiskHttpServer(string host = "127.0.0.1", ushort port = 8080)
+    /// <param name="isCorsEnabled">是否启用 CORS</param>
+    /// <param name="corsAllowedOrigins">允许的 CORS 来源（逗号分隔）</param>
+    public SiskHttpServer(string host = "127.0.0.1", ushort port = 8080, bool isCorsEnabled = false, string corsAllowedOrigins = "")
     {
         _host = host;
         _port = port;
+        _isCorsEnabled = isCorsEnabled;
+        _corsAllowedOrigins = corsAllowedOrigins ?? "";
         _logger = IAppHost.GetService<ILogger<SiskHttpServer>>();
     }
 
@@ -209,9 +215,16 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 为响应添加 CORS 头
     /// </summary>
-    private static HttpResponse AddCorsHeaders(HttpResponse response)
+    private static HttpResponse AddCorsHeaders(HttpResponse response, bool isCorsEnabled, string allowedOrigins)
     {
-        response.Headers["Access-Control-Allow-Origin"] = "*";
+        if (!isCorsEnabled)
+        {
+            return response;
+        }
+
+        // 如果 allowedOrigins 为空，使用 * 允许所有
+        var origin = string.IsNullOrWhiteSpace(allowedOrigins) ? "*" : allowedOrigins;
+        response.Headers["Access-Control-Allow-Origin"] = origin;
         response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
         response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
         response.Headers["Access-Control-Max-Age"] = "86400";
@@ -224,7 +237,7 @@ public class SiskHttpServer : IDisposable
     private HttpResponse HandleOptionsPreflight(HttpRequest request)
     {
         var response = new HttpResponse(200, null);
-        return AddCorsHeaders(response);
+        return AddCorsHeaders(response, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>
@@ -269,11 +282,11 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 处理 WebSocket 连接 - 复用 NetMQPUBServer 消息推送逻辑
     /// </summary>
-    private HttpResponse HandleWebSocket(HttpRequest request)
+    private async Task<HttpResponse> HandleWebSocket(HttpRequest request)
     {
         try
         {
-            var ws = request.GetWebSocket();
+            using var ws = request.GetWebSocket();
             string connectionId = Guid.NewGuid().ToString();
 
             _wsConnections.TryAdd(connectionId, ws);
@@ -281,43 +294,39 @@ public class SiskHttpServer : IDisposable
             _logger?.LogInformation("WebSocket client connected: {ConnectionId}, total connections: {Count}",
                 connectionId, _wsConnections.Count);
 
-            // 异步处理 WebSocket 连接
-            _ = Task.Run(async () =>
+            try
             {
+                // 处理 WebSocket 消息循环
+                var msg = await ws.ReceiveMessageAsync();
+                while (msg != null)
+                {
+                    string message = msg.GetString();
+                    _logger?.LogDebug("WebSocket received from {ConnectionId}: {Message}", connectionId, message);
+
+                    // 处理订阅逻辑 - 可以扩展支持订阅特定主题
+                    // 目前简单地返回确认消息，后续可以扩展为订阅/发布模式
+                    await ws.SendAsync($"{{\"type\":\"ack\",\"message\":\"{message}\"}}");
+
+                    msg = await ws.ReceiveMessageAsync();
+                }
+            }
+            finally
+            {
+                _wsConnections.TryRemove(connectionId, out _);
+                _logger?.LogInformation("WebSocket client disconnected: {ConnectionId}, remaining connections: {Count}",
+                    connectionId, _wsConnections.Count);
+
                 try
                 {
-                    // 处理 WebSocket 消息循环
-                    var msg = await ws.ReceiveMessageAsync();
-                    while (msg != null)
-                    {
-                        string message = msg.GetString();
-                        _logger?.LogDebug("WebSocket received from {ConnectionId}: {Message}", connectionId, message);
-
-                        // 处理订阅逻辑 - 可以扩展支持订阅特定主题
-                        // 目前简单地返回确认消息，后续可以扩展为订阅/发布模式
-                        await ws.SendAsync($"{{\"type\":\"ack\",\"message\":\"{message}\"}}");
-
-                        msg = await ws.ReceiveMessageAsync();
-                    }
+                    await ws.CloseAsync();
                 }
-                finally
+                catch (Exception ex)
                 {
-                    _wsConnections.TryRemove(connectionId, out _);
-                    _logger?.LogInformation("WebSocket client disconnected: {ConnectionId}, remaining connections: {Count}",
-                        connectionId, _wsConnections.Count);
-
-                    try
-                    {
-                        await ws.CloseAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, "Error closing WebSocket: {Message}", ex.Message);
-                    }
+                    _logger?.LogError(ex, "Error closing WebSocket: {Message}", ex.Message);
                 }
-            });
+            }
 
-            // 返回一个空响应，Sisk 会处理 WebSocket 升级
+            // 返回空响应，Sisk 会处理 WebSocket 升级
             return new HttpResponse(101, null);
         }
         catch (Exception ex)
@@ -367,7 +376,7 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 创建成功响应
     /// </summary>
-    private static HttpResponse CreateSuccessResponse(string message, object? data, long requestId, int statusCode = 200)
+    private HttpResponse CreateSuccessResponse(string message, object? data, long requestId, int statusCode = 200)
     {
         var response = new
         {
@@ -382,13 +391,13 @@ public class SiskHttpServer : IDisposable
         var json = JsonSerializer.Serialize(response);
         var content = new StringContent(json);
         var httpResponse = new HttpResponse(statusCode, content);
-        return AddCorsHeaders(httpResponse);
+        return AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>
     /// 创建错误响应
     /// </summary>
-    private static HttpResponse CreateErrorResponse(string errorMessage, long requestId, int statusCode = 500)
+    private HttpResponse CreateErrorResponse(string errorMessage, long requestId, int statusCode = 500)
     {
         var response = new
         {
@@ -403,7 +412,7 @@ public class SiskHttpServer : IDisposable
         var json = JsonSerializer.Serialize(response);
         var content = new StringContent(json);
         var httpResponse = new HttpResponse(statusCode, content);
-        return AddCorsHeaders(httpResponse);
+        return AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>

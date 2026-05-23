@@ -101,6 +101,19 @@
                                VerticalAlignment="Center"/>
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="启用 CORS">
+                <fa:SettingsExpanderItem.Footer>
+                    <ToggleSwitch IsChecked="{Binding IsCorsEnabled}"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="CORS 允许来源"
+                                     IsVisible="{Binding IsCorsSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBox Text="{Binding CorsAllowedOrigins}"
+                             Watermark="留空仅允许同源，多个用逗号分隔"
+                             MinWidth="200"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
         </fa:SettingsExpander>
 
         <!-- 错误提示 -->

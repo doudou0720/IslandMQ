@@ -13,7 +13,7 @@
 
     <PropertyGroup>
         <ClassIslandPluginSdkVersion>2.0.0.1</ClassIslandPluginSdkVersion>
-        <Version>0.0.1.2</Version>
+        <Version>0.0.2.0</Version>
     </PropertyGroup>
 
     <ItemGroup>

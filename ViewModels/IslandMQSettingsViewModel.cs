@@ -146,6 +146,50 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 获取或设置是否启用HTTP服务器。
+    /// </summary>
+    public bool IsHttpServerEnabled
+    {
+        get => _settings.IsHttpServerEnabled;
+        set
+        {
+            if (_settings.IsHttpServerEnabled != value)
+            {
+                _settings.IsHttpServerEnabled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsHttpServerSettingsVisible));
+                OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(PortConflictError));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取HTTP服务器设置是否可见（当服务器启用时显示）。
+    /// </summary>
+    public bool IsHttpServerSettingsVisible => IsHttpServerEnabled;
+
+    /// <summary>
+    /// 获取或设置HTTP服务器的端口号。
+    /// </summary>
+    public int HttpServerPort
+    {
+        get => _settings.HttpServerPort;
+        set
+        {
+            if (_settings.HttpServerPort != value)
+            {
+                _settings.HttpServerPort = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(PortConflictError));
+                OnPropertyChanged(nameof(CanSave));
+                HasChanges = true;
+            }
+        }
+    }
+
+    /// <summary>
     /// 获取或设置插件版本号。
     /// </summary>
     public string PluginVersion { get; } = typeof(IslandMQSettingsViewModel).Assembly.GetName().Version?.ToString() ?? "未知";
@@ -200,12 +244,16 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         _settings.ReqServerPort = 5555;
         _settings.IsPubServerEnabled = true;
         _settings.PubServerPort = 5556;
+        _settings.IsHttpServerEnabled = false;
+        _settings.HttpServerPort = 8080;
         HasChanges = true;
         OnPropertyChanged(nameof(ServerIp));
         OnPropertyChanged(nameof(IsReqServerEnabled));
         OnPropertyChanged(nameof(ReqServerPort));
         OnPropertyChanged(nameof(IsPubServerEnabled));
         OnPropertyChanged(nameof(PubServerPort));
+        OnPropertyChanged(nameof(IsHttpServerEnabled));
+        OnPropertyChanged(nameof(HttpServerPort));
         OnPropertyChanged(nameof(PortConflictError));
         OnPropertyChanged(nameof(CanSave));
     }

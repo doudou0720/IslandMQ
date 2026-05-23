@@ -67,6 +67,42 @@
             </fa:SettingsExpanderItem>
         </fa:SettingsExpander>
 
+        <!-- HTTP 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE774;}"
+                             Header="HTTP 服务器 (API + WebSocket)"
+                             Description="HTTP API 用于请求响应，WebSocket 用于实时推送">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsHttpServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="HTTP 端口">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding HttpServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="API 端点">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBlock Text="POST /api"
+                               Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="WebSocket 端点">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBlock Text="GET /ws"
+                               Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
+
         <!-- 错误提示 -->
         <Border IsVisible="{Binding PortConflictError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 Background="#20FF0000"

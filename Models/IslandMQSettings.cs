@@ -37,4 +37,16 @@ public class IslandMQSettings
     /// </summary>
     [JsonPropertyName("serverIp")]
     public string ServerIp { get; set; } = "127.0.0.1";
+
+    /// <summary>
+    /// 获取或设置是否启用 HTTP 服务器。
+    /// </summary>
+    [JsonPropertyName("isHttpServerEnabled")]
+    public bool IsHttpServerEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 获取或设置 HTTP 服务器的端口号。
+    /// </summary>
+    [JsonPropertyName("httpServerPort")]
+    public int HttpServerPort { get; set; } = 8080;
 }

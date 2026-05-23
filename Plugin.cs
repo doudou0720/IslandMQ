@@ -27,6 +27,7 @@ public class Plugin : PluginBase
 {
     private NetMQREQServer? _netMqReqServer;
     private NetMQPUBServer? _netMqPubServer;
+    private SiskHttpServer? _siskHttpServer;
     private ILessonsService? _lessonsService;
     private ILogger<IslandMQ.Plugin>? _logger;
     private IslandMQSettingsService? _settingsService;
@@ -98,6 +99,7 @@ public class Plugin : PluginBase
             _settingsService = IAppHost.GetService<IslandMQSettingsService>();
             StartNetMqReqServer();
             StartNetMqPubServer();
+            StartSiskHttpServer();
             RegisterLessonEvents();
         };
         app.AppStopping += (o, e) =>
@@ -105,6 +107,7 @@ public class Plugin : PluginBase
             UnregisterLessonEvents();
             StopNetMqReqServer();
             StopNetMqPubServer();
+            StopSiskHttpServer();
         };
     }
 
@@ -303,5 +306,61 @@ public class Plugin : PluginBase
     private void OnNetMqPubServerError(object? sender, Exception e)
     {
         _logger?.LogError(e, "NetMQ PUB server error: {Message}", e.Message);
+    }
+
+    /// <summary>
+    /// 启动 Sisk HTTP 服务器。
+    /// </summary>
+    private void StartSiskHttpServer()
+    {
+        if (_settingsService == null || !_settingsService.Settings.IsHttpServerEnabled)
+        {
+            _logger?.LogInformation("HTTP server is disabled in settings.");
+            return;
+        }
+
+        try
+        {
+            _siskHttpServer = new SiskHttpServer(
+                _settingsService.Settings.ServerIp,
+                (ushort)_settingsService.Settings.HttpServerPort);
+            _siskHttpServer.ErrorOccurred += OnSiskHttpServerError;
+            _siskHttpServer.Start();
+            _logger?.LogInformation("Sisk HTTP server started at http://{Host}:{Port}",
+                _settingsService.Settings.ServerIp, _settingsService.Settings.HttpServerPort);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to start Sisk HTTP server: {Message}", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 停止 Sisk HTTP 服务器。
+    /// </summary>
+    private void StopSiskHttpServer()
+    {
+        if (_siskHttpServer != null)
+        {
+            try
+            {
+                _siskHttpServer.ErrorOccurred -= OnSiskHttpServerError;
+                _siskHttpServer.Dispose();
+                _logger?.LogInformation("Sisk HTTP server stopped successfully!");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to stop/dispose Sisk HTTP server: {Message}", ex.Message);
+            }
+            _siskHttpServer = null;
+        }
+    }
+
+    /// <summary>
+    /// 处理 Sisk HTTP 服务器的错误事件。
+    /// </summary>
+    private void OnSiskHttpServerError(object? sender, Exception e)
+    {
+        _logger?.LogError(e, "Sisk HTTP server error: {Message}", e.Message);
     }
 }

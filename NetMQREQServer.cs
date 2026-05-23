@@ -22,6 +22,7 @@ namespace IslandMQ
     {
         private ResponseSocket? _serverSocket;
         private Thread? _serverThread;
+        private Thread? _processThread;
         private volatile bool _isRunning;
         private readonly string _endpoint = endpoint;
         private readonly ILogger<NetMQREQServer>? _logger = IAppHost.GetService<ILogger<NetMQREQServer>>();
@@ -29,6 +30,7 @@ namespace IslandMQ
         private readonly object _threadLock = new();
         private volatile bool _disposed;
         private readonly object _disposeLock = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<(string Message, long RequestId, ResponseSocket? Socket)> _requestQueue = new();
         private long _requestIdCounter;
         private const int ResponseVersion = 0;
 
@@ -117,6 +119,13 @@ namespace IslandMQ
                     Name = "NetMqServerThread"
                 };
                 _serverThread.Start();
+
+                _processThread = new Thread(ProcessRequests)
+                {
+                    IsBackground = true,
+                    Name = "NetMqProcessThread"
+                };
+                _processThread.Start();
             }
         }
 
@@ -182,6 +191,16 @@ namespace IslandMQ
 
                     _serverThread = null;
                 }
+
+                // 等待处理线程退出
+                if (_processThread != null)
+                {
+                    if (_processThread.IsAlive)
+                    {
+                        _processThread.Join(5000);
+                    }
+                    _processThread = null;
+                }
             }
         }
 
@@ -236,9 +255,8 @@ namespace IslandMQ
 
                             _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
 
-                            string response = ProcessMessage(message, requestId);
-                            socket.SendFrame(response);
-                            _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", requestId, response);
+                            // 将请求放入队列
+                            _requestQueue.Enqueue((message, requestId, socket));
                         }
                     }
                     catch (Exception ex)
@@ -270,6 +288,39 @@ namespace IslandMQ
                     {
                         _threadExitEvent.Set();
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理队列中的请求，从队列中取出请求并处理，然后发送响应。
+        /// </summary>
+        private void ProcessRequests()
+        {
+            while (_isRunning)
+            {
+                try
+                {
+                    if (_requestQueue.TryDequeue(out var request))
+                    {
+                        string response = ProcessMessage(request.Message, request.RequestId);
+                        request.Socket?.SendFrame(response);
+                        _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", request.RequestId, response);
+                    }
+                    else
+                    {
+                        // 队列为空时短暂等待，避免CPU空转
+                        Thread.Sleep(10);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ExceptionHelper.IsFatal(ex))
+                    {
+                        throw;
+                    }
+                    ErrorOccurred?.Invoke(this, ex);
+                    _logger?.LogError(ex, "Error processing request: {Message}", ex.Message);
                 }
             }
         }

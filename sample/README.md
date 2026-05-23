@@ -4,6 +4,15 @@
 
 但是理论上，任何支持 ZeroMQ (ZMQ) 语言都可以与 IslandMQ 插件进行通信。
 
+## 通信方式
+
+IslandMQ 支持两种通信方式：
+
+1. **ZeroMQ** - 原始的 NetMQ 通信方式
+2. **HTTP** - 通过 HTTP REST API 和 WebSocket（需要启用）
+
+详见 [HTTP 服务说明](./HTTP.md)
+
 ## 依赖
 
 需要安装 pyzmq 库：

@@ -1,7 +1,7 @@
 using ClassIsland.Core.Abstractions.Controls;
 using ClassIsland.Core.Attributes;
+using ClassIsland.Core.Enums.SettingsWindow;
 using ClassIsland.Shared;
-using FluentAvalonia.UI.Controls;
 using IslandMQ.ViewModels;
 
 namespace IslandMQ.Settings
@@ -11,7 +11,8 @@ namespace IslandMQ.Settings
     /// </summary>
     [SettingsPageInfo(
         id: "islandmq.settings",
-        name: "IslandMQ"
+        name: "基本设置",
+        category: SettingsPageCategory.External
     )]
     public partial class IslandMQSettingsPage : SettingsPageBase
     {
@@ -36,28 +37,8 @@ namespace IslandMQ.Settings
                 _viewModel = new IslandMQSettingsViewModel(settingsService.Settings, settingsService.Save);
                 DataContext = _viewModel;
 
-                BasicSettingsControl basicControl = new BasicSettingsControl { DataContext = _viewModel };
-                _viewModel.CurrentContent = basicControl;
-
-                MainNavigation.SelectedItem = MainNavigation.MenuItems[0];
-            }
-        }
-
-        private void MainNavigation_ItemInvoked(object? sender, NavigationViewItemInvokedEventArgs e)
-        {
-            if (e.InvokedItem is NavigationViewItem item && item.Tag is string tag)
-            {
-                switch (tag)
-                {
-                    case "basic":
-                        _viewModel.CurrentContent = new BasicSettingsControl { DataContext = _viewModel };
-                        break;
-                    case "about":
-                        _viewModel.CurrentContent = new AboutControl { DataContext = _viewModel };
-                        break;
-                    default:
-                        break;
-                }
+                // 默认显示基本设置
+                _viewModel.CurrentContent = new BasicSettingsControl { DataContext = _viewModel };
             }
         }
     }

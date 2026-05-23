@@ -8,7 +8,7 @@
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>True</EnableDynamicLoading>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
-        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**;ExtraIsland\**</DefaultItemExcludes>
     </PropertyGroup>
 
     <PropertyGroup>

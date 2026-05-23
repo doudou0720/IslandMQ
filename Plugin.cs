@@ -1,11 +1,15 @@
+using System.Reflection;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Attributes;
+using ClassIsland.Core.Enums.SettingsWindow;
 using ClassIsland.Core.Extensions.Registry;
+using ClassIsland.Core.Services.Registry;
 using ClassIsland.Shared;
 using IslandMQ.Services;
 using IslandMQ.Services.NotificationProviders;
+using IslandMQ.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -38,6 +42,36 @@ public class Plugin : PluginBase
         services.AddSettingsPage<Settings.IslandMQSettingsPage>();
         services.AddNotificationProvider<IslandMQNotificationProvider>();
 
+        // 动态反射，实现在低 PluginSdk 上使用高版本功能
+        List<SettingsPageInfo> registeredSettingsPageInfos = SettingsWindowRegistryService.Registered
+            .Where(info => info.Id.StartsWith("islandmq") && info.Category == SettingsPageCategory.External)
+            .ToList();
+
+        Console.WriteLine($"[IslandMQ] Registered settings pages count: {registeredSettingsPageInfos.Count}");
+
+        if (InjectService.TryGetAddSettingsPageGroupMethod(out MethodInfo? addSettingsPageGroupMethod))
+        {
+            Console.WriteLine("[IslandMQ] AddSettingsPageGroup method found, creating group...");
+            addSettingsPageGroupMethod.Invoke(typeof(SettingsWindowRegistryExtensions), [services, "islandmq", "\uEA33", "IslandMQ"]);
+
+            PropertyInfo groupIdProperty = InjectService.GetSettingsPageInfoGroupIdProperty();
+            foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+            {
+                groupIdProperty.SetValue(info, "islandmq");
+            }
+            Console.WriteLine("[IslandMQ] Group created successfully");
+        }
+        else
+        {
+            Console.WriteLine("[IslandMQ] AddSettingsPageGroup method not found, using fallback...");
+            FieldInfo nameField = InjectService.GetSettingsPageInfoNameField();
+            foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+            {
+                nameField.SetValue(info, "IslandMQ·" + (string)nameField.GetValue(info)!);
+            }
+            Console.WriteLine("[IslandMQ] Fallback applied");
+        }
+
         var app = AppBase.Current;
         app.AppStarted += (_, _) =>
         {
@@ -47,7 +81,7 @@ public class Plugin : PluginBase
             StartNetMqPubServer();
             RegisterLessonEvents();
         };
-        app.AppStopping += (o, e) => 
+        app.AppStopping += (o, e) =>
         {
             UnregisterLessonEvents();
             StopNetMqReqServer();

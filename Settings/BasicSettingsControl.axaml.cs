@@ -7,6 +7,9 @@ namespace IslandMQ.Settings;
 /// </summary>
 public partial class BasicSettingsControl : UserControl
 {
+    /// <summary>
+    /// 初始化 BasicSettingsControl 实例
+    /// </summary>
     public BasicSettingsControl()
     {
         InitializeComponent();

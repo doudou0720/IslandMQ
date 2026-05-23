@@ -3,133 +3,68 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:IslandMQ.ViewModels"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:ci="http://classisland.tech/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="IslandMQ.Settings.BasicSettingsControl"
              x:DataType="vm:IslandMQSettingsViewModel">
-    <StackPanel Spacing="12">
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="8"
-                Padding="16">
-            <StackPanel Spacing="12">
-                <TextBlock Text="服务器配置"
-                           FontSize="16"
-                           FontWeight="SemiBold"/>
-                <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                        CornerRadius="6"
-                        Padding="12">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="服务器 IP 地址" 
-                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="输入服务器的IP地址或域名" 
-                                       Opacity="0.7"
-                                       FontSize="13"/>
-                            <TextBox Text="{Binding ServerIp}"
-                                     Watermark="例如: 127.0.0.1"
-                                     Margin="0,4,0,0"
-                                     HorizontalAlignment="Stretch"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </StackPanel>
-        </Border>
+    <StackPanel Spacing="8">
+        <ci:IconText Glyph="&#xE704;" Text="服务器配置" Margin="0 0 0 4" />
 
-        <TextBlock Text="服务器配置"
-                   FontSize="16"
-                   FontWeight="SemiBold"/>
+        <!-- 服务器 IP 地址 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE968;}"
+                             Header="监听 IP 地址"
+                             Description="程序监听的 IP 地址，用于 NetMQ 客户端连接">
+            <fa:SettingsExpander.Footer>
+                <TextBox Text="{Binding ServerIp}"
+                         Watermark="例如: 127.0.0.1"
+                         MinWidth="150"
+                         MaxWidth="250"/>
+            </fa:SettingsExpander.Footer>
+        </fa:SettingsExpander>
 
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="6"
-                Padding="12">
-            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                <Path Grid.Column="0" Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
-                      Width="20" Height="20"
-                      Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                      Margin="0,0,12,0"/>
-                <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,16,0">
-                    <TextBlock Text="REQ 服务器 (请求/响应)" 
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="用于发送请求并接收响应的同步通信模式" 
-                               Opacity="0.7"
-                               FontSize="13"/>
-                </StackPanel>
-                <ToggleSwitch Grid.Column="2" 
-                              IsChecked="{Binding IsReqServerEnabled}"
-                              OnContent=""
-                              OffContent=""/>
-            </Grid>
-        </Border>
+        <!-- REQ 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE8BD;}"
+                             Header="REQ 服务器 (请求/响应)"
+                             Description="用于发送请求并接收响应的同步通信模式">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsReqServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="REQ 端口">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding ReqServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
 
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="6"
-                Padding="12"
-                IsVisible="{Binding IsReqServerEnabled}">
-            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                <Path Grid.Column="0" Data="M21 11c0-.55-.45-1-1-1h-3V7l-4-4H8c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-3h3c.55 0 1-.45 1-1zM10 5.5l3.5 3.5H10V5.5zM18 17H8V5h2v5c0 .83.67 1.5 1.5 1.5H18v5.5zM20 14v-2h-3v2h3z"
-                      Width="20" Height="20"
-                      Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                      Margin="0,0,12,0"/>
-                <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,16,0">
-                    <TextBlock Text="REQ 端口" 
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="请求/响应模式的服务器端口 (1-65535)" 
-                               Opacity="0.7"
-                               FontSize="13"/>
-                </StackPanel>
-                <NumericUpDown Grid.Column="2" 
-                                Value="{Binding ReqServerPort}"
-                                Minimum="1"
-                                Maximum="65535"
-                                Increment="1"
-                                Width="100"/>
-            </Grid>
-        </Border>
-
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="6"
-                Padding="12">
-            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                <Path Grid.Column="0" Data="M3 15v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M17 9l-5 5-4-4-4 4M12 12.5V3.5"
-                      Width="20" Height="20"
-                      Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                      Margin="0,0,12,0"/>
-                <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,16,0">
-                    <TextBlock Text="PUB 服务器 (发布/订阅)" 
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="用于事件广播的异步通信模式" 
-                               Opacity="0.7"
-                               FontSize="13"/>
-                </StackPanel>
-                <ToggleSwitch Grid.Column="2" 
-                              IsChecked="{Binding IsPubServerEnabled}"
-                              OnContent=""
-                              OffContent=""/>
-            </Grid>
-        </Border>
-
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                CornerRadius="6"
-                Padding="12"
-                IsVisible="{Binding IsPubServerEnabled}">
-            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                <Path Grid.Column="0" Data="M21 11c0-.55-.45-1-1-1h-3V7l-4-4H8c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-3h3c.55 0 1-.45 1-1zM10 5.5l3.5 3.5H10V5.5zM18 17H8V5h2v5c0 .83.67 1.5 1.5 1.5H18v5.5zM20 14v-2h-3v2h3z"
-                      Width="20" Height="20"
-                      Fill="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                      Margin="0,0,12,0"/>
-                <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,16,0">
-                    <TextBlock Text="PUB 端口" 
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="发布/订阅模式的服务器端口 (1-65535)" 
-                               Opacity="0.7"
-                               FontSize="13"/>
-                </StackPanel>
-                <NumericUpDown Grid.Column="2" 
-                                Value="{Binding PubServerPort}"
-                                Minimum="1"
-                                Maximum="65535"
-                                Increment="1"
-                                Width="100"/>
-            </Grid>
-        </Border>
+        <!-- PUB 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE714;}"
+                             Header="PUB 服务器 (发布/订阅)"
+                             Description="用于事件广播的异步通信模式">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsPubServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="PUB 端口">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding PubServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
     </StackPanel>
 </UserControl>

@@ -293,7 +293,7 @@ namespace IslandMQ
         }
 
         /// <summary>
-        /// 处理队列中的请求，从队列中取出请求并处理，然后发送响应。
+        /// 处理队列中的请求，从队列中取出请求并处理，然后将响应放入响应队列由 RunServer 发送。
         /// </summary>
         private void ProcessRequests()
         {
@@ -304,8 +304,9 @@ namespace IslandMQ
                     if (_requestQueue.TryDequeue(out var request))
                     {
                         string response = ProcessMessage(request.Message, request.RequestId);
-                        request.Socket?.SendFrame(response);
-                        _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", request.RequestId, response);
+                        // 将响应放入响应队列，由 RunServer 线程在同一 socket 上发送
+                        _responseQueue.Enqueue((request.RequestId, response));
+                        _logger?.LogDebug("Queued response (Request ID: {RequestId}): {Response}", request.RequestId, response);
                     }
                     else
                     {

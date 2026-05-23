@@ -55,6 +55,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 _settings.NetMqServerIp = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
+                HasChanges = true;
             }
         }
     }
@@ -72,6 +73,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 _settings.HttpServerIp = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
+                HasChanges = true;
             }
         }
     }
@@ -90,7 +92,9 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsReqServerSettingsVisible));
                 OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(PortConflictError));
                 OnPropertyChanged(nameof(CanSave));
+                HasChanges = true;
             }
         }
     }
@@ -268,6 +272,14 @@ public partial class IslandMQSettingsViewModel : ObservableObject
             if (IsReqServerEnabled && IsPubServerEnabled && ReqServerPort == PubServerPort)
             {
                 return "REQ 和 PUB 端口不能相同";
+            }
+            if (IsReqServerEnabled && IsHttpServerEnabled && ReqServerPort == HttpServerPort)
+            {
+                return "REQ 和 HTTP 端口不能相同";
+            }
+            if (IsPubServerEnabled && IsHttpServerEnabled && PubServerPort == HttpServerPort)
+            {
+                return "PUB 和 HTTP 端口不能相同";
             }
             return "";
         }

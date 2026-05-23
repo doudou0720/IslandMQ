@@ -185,12 +185,12 @@ public class SiskHttpServer : IDisposable
 
             if (string.IsNullOrEmpty(message))
             {
-                return CreateErrorResponse("Empty request body", requestId, 400);
+                return CreateErrorResponse("Empty request body", requestId, 400, request);
             }
 
             _logger?.LogDebug("Received HTTP API POST request (Request ID: {RequestId}): {Message}", requestId, message);
 
-            return ProcessApiMessage(message, requestId);
+            return ProcessApiMessage(message, requestId, request);
         }
         catch (Exception ex)
         {
@@ -199,7 +199,7 @@ public class SiskHttpServer : IDisposable
                 throw;
             }
             _logger?.LogError(ex, "Error handling API request (Request ID: {RequestId}): {Message}", requestId, ex.Message);
-            return CreateErrorResponse("Internal server error", requestId, 500);
+            return CreateErrorResponse("Internal server error", requestId, 500, request);
         }
     }
 
@@ -215,16 +215,42 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 为响应添加 CORS 头
     /// </summary>
-    private static HttpResponse AddCorsHeaders(HttpResponse response, bool isCorsEnabled, string allowedOrigins)
+    private static HttpResponse AddCorsHeaders(HttpRequest request, HttpResponse response, bool isCorsEnabled, string allowedOrigins)
     {
         if (!isCorsEnabled)
         {
             return response;
         }
 
-        // 如果 allowedOrigins 为空，使用 * 允许所有
-        var origin = string.IsNullOrWhiteSpace(allowedOrigins) ? "*" : allowedOrigins;
-        response.Headers["Access-Control-Allow-Origin"] = origin;
+        // 获取请求的 Origin 头
+        string? requestOrigin = request.Headers["Origin"];
+
+        // 如果 allowedOrigins 为空且没有请求 Origin，仅允许同源（不设置 Access-Control-Allow-Origin）
+        // 如果 allowedOrigins 为空但有请求 Origin，反射请求 Origin
+        if (string.IsNullOrWhiteSpace(allowedOrigins))
+        {
+            if (!string.IsNullOrEmpty(requestOrigin))
+            {
+                // 反射请求 Origin（允许同源请求）
+                response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
+            }
+            // 如果没有 Origin 头，不设置 CORS 头（默认同源策略）
+        }
+        else
+        {
+            // 解析允许的 Origins
+            var allowedSet = allowedOrigins
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // 检查请求 Origin 是否在允许列表中
+            if (!string.IsNullOrEmpty(requestOrigin) && allowedSet.Contains(requestOrigin))
+            {
+                response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
+            }
+            // 如果请求 Origin 不在允许列表中，不设置 CORS 头
+        }
+
         response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
         response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
         response.Headers["Access-Control-Max-Age"] = "86400";
@@ -243,7 +269,7 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 处理 API 消息的通用逻辑
     /// </summary>
-    private HttpResponse ProcessApiMessage(string message, long requestId)
+    private HttpResponse ProcessApiMessage(string message, long requestId, HttpRequest? request = null)
     {
         try
         {
@@ -252,7 +278,7 @@ public class SiskHttpServer : IDisposable
 
             if (!parseResult.Success)
             {
-                return CreateErrorResponse(parseResult.ErrorMessage ?? "Invalid JSON", requestId, 400);
+                return CreateErrorResponse(parseResult.ErrorMessage ?? "Invalid JSON", requestId, 400, request);
             }
 
             // 调用 API 助手处理请求 - 复用 ClassIslandAPIHelper
@@ -261,11 +287,11 @@ public class SiskHttpServer : IDisposable
             // 根据状态码返回响应
             if (apiResult.StatusCode is >= 200 and < 300)
             {
-                return CreateSuccessResponse(apiResult.Message, apiResult.Data, requestId, apiResult.StatusCode);
+                return CreateSuccessResponse(apiResult.Message, apiResult.Data, requestId, apiResult.StatusCode, request);
             }
             else
             {
-                return CreateErrorResponse(apiResult.Message, requestId, apiResult.StatusCode);
+                return CreateErrorResponse(apiResult.Message, requestId, apiResult.StatusCode, request);
             }
         }
         catch (Exception ex)
@@ -275,7 +301,7 @@ public class SiskHttpServer : IDisposable
                 throw;
             }
             _logger?.LogError(ex, "Error processing API message (Request ID: {RequestId}): {Message}", requestId, ex.Message);
-            return CreateErrorResponse("Internal server error", requestId, 500);
+            return CreateErrorResponse("Internal server error", requestId, 500, request);
         }
     }
 
@@ -305,7 +331,9 @@ public class SiskHttpServer : IDisposable
 
                     // 处理订阅逻辑 - 可以扩展支持订阅特定主题
                     // 目前简单地返回确认消息，后续可以扩展为订阅/发布模式
-                    await ws.SendAsync($"{{\"type\":\"ack\",\"message\":\"{message}\"}}");
+                    var ack = new { type = "ack", message = message };
+                    var json = JsonSerializer.Serialize(ack);
+                    await ws.SendAsync(json);
 
                     msg = await ws.ReceiveMessageAsync();
                 }

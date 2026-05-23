@@ -323,15 +323,22 @@ namespace IslandMQ
 
             try
             {
+                int port = _settingsService.Settings.HttpServerPort;
+                if (port < 1 || port > 65535)
+                {
+                    _logger?.LogError("Invalid HTTP server port {Port}. Port must be between 1 and 65535.", port);
+                    return;
+                }
+
                 _siskHttpServer = new SiskHttpServer(
                     _settingsService.Settings.HttpServerIp,
-                    (ushort)_settingsService.Settings.HttpServerPort,
+                    (ushort)port,
                     _settingsService.Settings.IsCorsEnabled,
                     _settingsService.Settings.CorsAllowedOrigins);
                 _siskHttpServer.ErrorOccurred += OnSiskHttpServerError;
                 _siskHttpServer.Start();
                 _logger?.LogInformation("Sisk HTTP server started at http://{Host}:{Port}",
-                    _settingsService.Settings.HttpServerIp, _settingsService.Settings.HttpServerPort);
+                    _settingsService.Settings.HttpServerIp, port);
             }
             catch (Exception ex)
             {
@@ -368,9 +375,21 @@ namespace IslandMQ
             _logger?.LogError(e, "Sisk HTTP server error: {Message}", e.Message);
         }
 
+        private bool _disposed;
+
         public void Dispose()
         {
-            throw new NotImplementedException();
+            if (_disposed)
+            {
+                return;
+            }
+
+            _netMqReqServer?.Dispose();
+            _netMqPubServer?.Dispose();
+            _siskHttpServer?.Dispose();
+
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -74,7 +74,8 @@
             <fa:SettingsExpander.Footer>
                 <ToggleSwitch IsChecked="{Binding IsHttpServerEnabled}"/>
             </fa:SettingsExpander.Footer>
-            <fa:SettingsExpanderItem Content="HTTP 监听 IP">
+            <fa:SettingsExpanderItem Content="HTTP 监听 IP"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
                 <fa:SettingsExpanderItem.Footer>
                     <TextBox Text="{Binding HttpServerIp}"
                              Watermark="例如: 127.0.0.1"
@@ -82,7 +83,8 @@
                              MaxWidth="250"/>
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
-            <fa:SettingsExpanderItem Content="HTTP 端口">
+            <fa:SettingsExpanderItem Content="HTTP 端口"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
                 <fa:SettingsExpanderItem.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <ci:Field VerticalAlignment="Center" Suffix="端口">
@@ -95,21 +97,24 @@
                     </StackPanel>
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
-            <fa:SettingsExpanderItem Content="API 端点">
+            <fa:SettingsExpanderItem Content="API 端点"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
                 <fa:SettingsExpanderItem.Footer>
                     <TextBlock Text="POST /api"
                                Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
                                VerticalAlignment="Center"/>
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
-            <fa:SettingsExpanderItem Content="WebSocket 端点">
+            <fa:SettingsExpanderItem Content="WebSocket 端点"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
                 <fa:SettingsExpanderItem.Footer>
                     <TextBlock Text="GET /ws"
                                Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
                                VerticalAlignment="Center"/>
                 </fa:SettingsExpanderItem.Footer>
             </fa:SettingsExpanderItem>
-            <fa:SettingsExpanderItem Content="启用 CORS">
+            <fa:SettingsExpanderItem Content="启用 CORS"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
                 <fa:SettingsExpanderItem.Footer>
                     <ToggleSwitch IsChecked="{Binding IsCorsEnabled}"/>
                 </fa:SettingsExpanderItem.Footer>

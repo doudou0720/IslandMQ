@@ -11,12 +11,12 @@
     <StackPanel Spacing="8">
         <ci:IconText Glyph="&#xE704;" Text="服务器配置" Margin="0 0 0 4" />
 
-        <!-- 服务器 IP 地址 -->
+        <!-- NetMQ 服务器 IP 地址 -->
         <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE968;}"
-                             Header="监听 IP 地址"
-                             Description="程序监听的 IP 地址，用于 NetMQ 客户端连接">
+                             Header="NetMQ 监听 IP 地址"
+                             Description="程序监听的 IP 地址，用于 NetMQ (REQ/PUB) 客户端连接">
             <fa:SettingsExpander.Footer>
-                <TextBox Text="{Binding ServerIp}"
+                <TextBox Text="{Binding NetMqServerIp}"
                          Watermark="例如: 127.0.0.1"
                          MinWidth="150"
                          MaxWidth="250"/>
@@ -74,6 +74,14 @@
             <fa:SettingsExpander.Footer>
                 <ToggleSwitch IsChecked="{Binding IsHttpServerEnabled}"/>
             </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="HTTP 监听 IP">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBox Text="{Binding HttpServerIp}"
+                             Watermark="例如: 127.0.0.1"
+                             MinWidth="150"
+                             MaxWidth="250"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
             <fa:SettingsExpanderItem Content="HTTP 端口">
                 <fa:SettingsExpanderItem.Footer>
                     <StackPanel Orientation="Horizontal" Spacing="8">

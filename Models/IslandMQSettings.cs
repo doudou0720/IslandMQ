@@ -33,10 +33,16 @@ public class IslandMQSettings
     public int PubServerPort { get; set; } = 5556;
 
     /// <summary>
-    /// 获取或设置服务器的IP地址。
+    /// 获取或设置 NetMQ 服务器的 IP 地址。
     /// </summary>
-    [JsonPropertyName("serverIp")]
-    public string ServerIp { get; set; } = "127.0.0.1";
+    [JsonPropertyName("netMqServerIp")]
+    public string NetMqServerIp { get; set; } = "127.0.0.1";
+
+    /// <summary>
+    /// 获取或设置 HTTP 服务器的 IP 地址。
+    /// </summary>
+    [JsonPropertyName("httpServerIp")]
+    public string HttpServerIp { get; set; } = "127.0.0.1";
 
     /// <summary>
     /// 获取或设置是否启用 HTTP 服务器。

@@ -201,7 +201,7 @@ namespace IslandMQ
 
             try
             {
-                string endpoint = $"tcp://{_settingsService.Settings.ServerIp}:{_settingsService.Settings.ReqServerPort}";
+                string endpoint = $"tcp://{_settingsService.Settings.NetMqServerIp}:{_settingsService.Settings.ReqServerPort}";
                 _netMqReqServer = new NetMQREQServer(endpoint);
                 if (_netMqReqServer == null)
                 {
@@ -252,7 +252,7 @@ namespace IslandMQ
 
             try
             {
-                string endpoint = $"tcp://{_settingsService.Settings.ServerIp}:{_settingsService.Settings.PubServerPort}";
+                string endpoint = $"tcp://{_settingsService.Settings.NetMqServerIp}:{_settingsService.Settings.PubServerPort}";
                 _netMqPubServer = new NetMQPUBServer(endpoint);
                 if (_netMqPubServer == null)
                 {
@@ -324,14 +324,14 @@ namespace IslandMQ
             try
             {
                 _siskHttpServer = new SiskHttpServer(
-                    _settingsService.Settings.ServerIp,
+                    _settingsService.Settings.HttpServerIp,
                     (ushort)_settingsService.Settings.HttpServerPort,
                     _settingsService.Settings.IsCorsEnabled,
                     _settingsService.Settings.CorsAllowedOrigins);
                 _siskHttpServer.ErrorOccurred += OnSiskHttpServerError;
                 _siskHttpServer.Start();
                 _logger?.LogInformation("Sisk HTTP server started at http://{Host}:{Port}",
-                    _settingsService.Settings.ServerIp, _settingsService.Settings.HttpServerPort);
+                    _settingsService.Settings.HttpServerIp, _settingsService.Settings.HttpServerPort);
             }
             catch (Exception ex)
             {

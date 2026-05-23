@@ -43,16 +43,33 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 获取或设置服务器的IP地址。
+    /// 获取或设置 NetMQ 服务器的 IP 地址。
     /// </summary>
-    public string ServerIp
+    public string NetMqServerIp
     {
-        get => _settings.ServerIp;
+        get => _settings.NetMqServerIp;
         set
         {
-            if (_settings.ServerIp != value)
+            if (_settings.NetMqServerIp != value)
             {
-                _settings.ServerIp = value;
+                _settings.NetMqServerIp = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasChanges));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取或设置 HTTP 服务器的 IP 地址。
+    /// </summary>
+    public string HttpServerIp
+    {
+        get => _settings.HttpServerIp;
+        set
+        {
+            if (_settings.HttpServerIp != value)
+            {
+                _settings.HttpServerIp = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
             }
@@ -73,6 +90,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsReqServerSettingsVisible));
                 OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
@@ -203,6 +221,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsCorsSettingsVisible));
                 OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
@@ -279,7 +298,8 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     [RelayCommand]
     private void Reset()
     {
-        _settings.ServerIp = "127.0.0.1";
+        _settings.NetMqServerIp = "127.0.0.1";
+        _settings.HttpServerIp = "127.0.0.1";
         _settings.IsReqServerEnabled = true;
         _settings.ReqServerPort = 5555;
         _settings.IsPubServerEnabled = true;
@@ -289,7 +309,8 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         _settings.IsCorsEnabled = false;
         _settings.CorsAllowedOrigins = "";
         HasChanges = true;
-        OnPropertyChanged(nameof(ServerIp));
+        OnPropertyChanged(nameof(NetMqServerIp));
+        OnPropertyChanged(nameof(HttpServerIp));
         OnPropertyChanged(nameof(IsReqServerEnabled));
         OnPropertyChanged(nameof(ReqServerPort));
         OnPropertyChanged(nameof(IsPubServerEnabled));

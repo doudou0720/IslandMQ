@@ -9,9 +9,7 @@
 IslandMQ 支持两种通信方式：
 
 1. **ZeroMQ** - 原始的 NetMQ 通信方式
-2. **HTTP** - 通过 HTTP REST API 和 WebSocket（需要启用）
-
-详见 [HTTP 服务说明](./HTTP.md)
+2. **HTTP** - 通过 HTTP REST API 和 WebSocket（需要用户自行启用） 详见 [HTTP 服务说明](./HTTP.md)
 
 ## 依赖
 
@@ -22,6 +20,8 @@ pip install pyzmq
 ```
 
 ## 使用说明
+
+> **重要提醒**: 以下示例代码中使用的是默认端口号（5555 和 5556），实际使用时请根据 IslandMQ 插件的配置确认并修改为您对应的端口号。如果你是软件开发者，请提供修改连接端口的配置
 
 ### REQ/REP 模式 (请求-应答)
 

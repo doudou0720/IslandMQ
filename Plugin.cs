@@ -53,24 +53,42 @@ public class Plugin : PluginBase
         if (InjectService.TryGetAddSettingsPageGroupMethod(out MethodInfo? addSettingsPageGroupMethod))
         {
             Console.WriteLine("[IslandMQ] AddSettingsPageGroup method found, creating group...");
-            addSettingsPageGroupMethod.Invoke(typeof(SettingsWindowRegistryExtensions), [services, "islandmq", "\uEA33", "IslandMQ"]);
-
-            PropertyInfo groupIdProperty = InjectService.GetSettingsPageInfoGroupIdProperty();
-            foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+            try
             {
-                groupIdProperty.SetValue(info, "islandmq");
+                addSettingsPageGroupMethod.Invoke(typeof(SettingsWindowRegistryExtensions), [services, "islandmq", "\uEA33", "IslandMQ"]);
+
+                if (InjectService.TryGetSettingsPageInfoGroupIdProperty(out PropertyInfo? groupIdProperty))
+                {
+                    foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+                    {
+                        groupIdProperty.SetValue(info, "islandmq");
+                    }
+                }
+                Console.WriteLine("[IslandMQ] Group created successfully");
             }
-            Console.WriteLine("[IslandMQ] Group created successfully");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[IslandMQ] Failed to create settings page group: {ex.Message}");
+            }
         }
         else
         {
             Console.WriteLine("[IslandMQ] AddSettingsPageGroup method not found, using fallback...");
-            FieldInfo nameField = InjectService.GetSettingsPageInfoNameField();
-            foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+            try
             {
-                nameField.SetValue(info, "IslandMQ·" + (string)nameField.GetValue(info)!);
+                if (InjectService.TryGetSettingsPageInfoNameField(out FieldInfo? nameField))
+                {
+                    foreach (SettingsPageInfo info in registeredSettingsPageInfos)
+                    {
+                        nameField.SetValue(info, "IslandMQ·" + (string)nameField.GetValue(info)!);
+                    }
+                }
+                Console.WriteLine("[IslandMQ] Fallback applied");
             }
-            Console.WriteLine("[IslandMQ] Fallback applied");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[IslandMQ] Failed to apply fallback grouping: {ex.Message}");
+            }
         }
 
         var app = AppBase.Current;

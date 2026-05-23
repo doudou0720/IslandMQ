@@ -17,32 +17,32 @@ public static class InjectService
     {
         Type settingsWindowRegistryExtensionsType = typeof(SettingsWindowRegistryExtensions);
         method = settingsWindowRegistryExtensionsType
-            .GetMethods()
-            .FirstOrDefault(method => (method.ToString()?.Contains("AddSettingsPageGroup") ?? false) && method.GetParameters().Length == 4);
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .FirstOrDefault(m => m.Name == "AddSettingsPageGroup" && m.GetParameters().Length == 4);
         return method != null;
     }
 
     /// <summary>
-    /// 获取 SettingsPageInfo 的 Name 字段
+    /// 尝试获取 SettingsPageInfo 的 Name 字段
     /// </summary>
-    public static FieldInfo GetSettingsPageInfoNameField()
+    public static bool TryGetSettingsPageInfoNameField([MaybeNullWhen(false)] out FieldInfo field)
     {
         Type settingsPageInfoType = typeof(SettingsPageInfo);
-        FieldInfo? field = settingsPageInfoType
+        field = settingsPageInfoType
             .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(method => method.ToString()?.Contains("Name") ?? false);
-        return field!;
+            .FirstOrDefault(f => f.Name == "Name" && f.FieldType == typeof(string));
+        return field != null;
     }
 
     /// <summary>
-    /// 获取 SettingsPageInfo 的 GroupId 属性
+    /// 尝试获取 SettingsPageInfo 的 GroupId 属性
     /// </summary>
-    public static PropertyInfo GetSettingsPageInfoGroupIdProperty()
+    public static bool TryGetSettingsPageInfoGroupIdProperty([MaybeNullWhen(false)] out PropertyInfo property)
     {
         Type settingsPageInfoType = typeof(SettingsPageInfo);
-        PropertyInfo? property = settingsPageInfoType
+        property = settingsPageInfoType
             .GetProperties()
-            .FirstOrDefault(method => method.ToString()?.Contains("GroupId") ?? false);
-        return property!;
+            .FirstOrDefault(p => p.Name == "GroupId" && p.PropertyType == typeof(string));
+        return property != null;
     }
 }

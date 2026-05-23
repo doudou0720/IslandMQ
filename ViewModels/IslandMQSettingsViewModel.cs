@@ -115,6 +115,8 @@ public partial class IslandMQSettingsViewModel : ObservableObject
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPubServerSettingsVisible));
                 OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(PortConflictError));
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
@@ -193,7 +195,7 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     [RelayCommand]
     private void Reset()
     {
-        _settings.ServerIp = "0.0.0.0";
+        _settings.ServerIp = "127.0.0.1";
         _settings.IsReqServerEnabled = true;
         _settings.ReqServerPort = 5555;
         _settings.IsPubServerEnabled = true;

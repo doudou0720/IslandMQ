@@ -44,7 +44,7 @@ namespace IslandMQ.Utils
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
+                throw new ArgumentException("未找到指定日期的课表", nameof(date));
             }
 
             // 如果是覆盖层，使用原始课表ID
@@ -106,7 +106,7 @@ namespace IslandMQ.Utils
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
+                throw new ArgumentException("未找到指定日期的课表", nameof(date));
             }
 
             // 如果是覆盖层，使用原始课表ID
@@ -155,10 +155,15 @@ namespace IslandMQ.Utils
         /// <param name="changes">课程索引到新科目ID的映射字典</param>
         private void ExecuteBatchReplaceClasses(DateTime date, Dictionary<int, Guid> changes)
         {
+            if (changes == null)
+            {
+                throw new ArgumentNullException(nameof(changes));
+            }
+
             ClassPlan? classPlan = _lessonsService.GetClassPlanByDate(date, out Guid? classPlanId);
             if (classPlan == null || classPlanId == null)
             {
-                throw new ArgumentException("未找到指定日期的课表", nameof(classPlanId));
+                throw new ArgumentException("未找到指定日期的课表", nameof(date));
             }
 
             // 如果是覆盖层，使用原始课表ID

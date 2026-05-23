@@ -1,0 +1,85 @@
+<ci:SettingsPageBase xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:IslandMQ.ViewModels"
+             xmlns:ci="http://classisland.tech/schemas/xaml/core"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="IslandMQ.Settings.AboutSettingsPage"
+             x:DataType="vm:IslandMQSettingsViewModel">
+    <ScrollViewer Padding="16" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <ci:FluentIcon FontSize="60"
+                    Glyph="&#xE704;"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+                    <TextBlock FontSize="24" FontWeight="SemiBold">IslandMQ</TextBlock>
+                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}">适用于 ClassIsland 的消息队列插件</TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 插件信息 -->
+            <fa:SettingsExpander Header="关于 IslandMQ"
+                             Description="基于 NetMQ 实现的轻量级消息队列服务"
+                             IsExpanded="True">
+                <fa:SettingsExpander.IconSource>
+                    <ci:FluentIconSource Glyph="&#xE946;"/>
+                </fa:SettingsExpander.IconSource>
+                <fa:SettingsExpander.Footer>
+                    <TextBlock Text="版本: 0.0.1.2"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                </fa:SettingsExpander.Footer>
+                <fa:SettingsExpanderItem Content="支持请求/响应 (REQ) 通信模式">
+                </fa:SettingsExpanderItem>
+                <fa:SettingsExpanderItem Content="支持发布/订阅 (PUB/SUB) 通信模式">
+                </fa:SettingsExpanderItem>
+                <fa:SettingsExpanderItem Content="跨平台支持，可在 Windows、Linux、macOS 上运行">
+                </fa:SettingsExpanderItem>
+            </fa:SettingsExpander>
+
+            <!-- 当前服务器状态 -->
+            <fa:SettingsExpander Header="当前服务器状态"
+                             Description="查看当前配置的服务器端口信息">
+                <fa:SettingsExpander.IconSource>
+                    <ci:FluentIconSource Glyph="&#xE968;"/>
+                </fa:SettingsExpander.IconSource>
+                <fa:SettingsExpanderItem Content="REQ 服务器 (请求/响应模式)">
+                    <fa:SettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding IsReqServerEnabled, StringFormat='状态: {0}'}"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ReqServerPort, StringFormat='端口: {0}'}"
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </fa:SettingsExpanderItem.Footer>
+                </fa:SettingsExpanderItem>
+                <fa:SettingsExpanderItem Content="PUB 服务器 (发布/订阅模式)">
+                    <fa:SettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding IsPubServerEnabled, StringFormat='状态: {0}'}"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding PubServerPort, StringFormat='端口: {0}'}"
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </fa:SettingsExpanderItem.Footer>
+                </fa:SettingsExpanderItem>
+            </fa:SettingsExpander>
+
+            <!-- 版权信息 -->
+            <fa:SettingsExpander Header="版权信息"
+                             Description="开源许可证和作者信息">
+                <fa:SettingsExpander.IconSource>
+                    <ci:FluentIconSource Glyph="&#xE8D4;"/>
+                </fa:SettingsExpander.IconSource>
+                <fa:SettingsExpanderItem Content="Copyright © 2026 doudou0720">
+                </fa:SettingsExpanderItem>
+                <fa:SettingsExpanderItem Content="License: GPL 3.0">
+                </fa:SettingsExpanderItem>
+            </fa:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</ci:SettingsPageBase>

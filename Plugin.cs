@@ -40,6 +40,7 @@ public class Plugin : PluginBase
     {
         services.AddSingleton<IslandMQSettingsService>();
         services.AddSettingsPage<Settings.IslandMQSettingsPage>();
+        services.AddSettingsPage<Settings.AboutSettingsPage>();
         services.AddNotificationProvider<IslandMQNotificationProvider>();
 
         // 动态反射，实现在低 PluginSdk 上使用高版本功能

@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:IslandMQ.ViewModels"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:ci="http://classisland.tech/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="IslandMQ.Settings.BasicSettingsControl"
+             x:DataType="vm:IslandMQSettingsViewModel">
+    <StackPanel Spacing="8">
+        <ci:IconText Glyph="&#xE704;" Text="服务器配置" Margin="0 0 0 4" />
+
+        <!-- 服务器 IP 地址 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE968;}"
+                             Header="监听 IP 地址"
+                             Description="程序监听的 IP 地址，用于 NetMQ 客户端连接">
+            <fa:SettingsExpander.Footer>
+                <TextBox Text="{Binding ServerIp}"
+                         Watermark="例如: 127.0.0.1"
+                         MinWidth="150"
+                         MaxWidth="250"/>
+            </fa:SettingsExpander.Footer>
+        </fa:SettingsExpander>
+
+        <!-- REQ 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE8BD;}"
+                             Header="REQ 服务器 (请求/响应)"
+                             Description="用于发送请求并接收响应的同步通信模式">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsReqServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="REQ 端口">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding ReqServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
+
+        <!-- PUB 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE714;}"
+                             Header="PUB 服务器 (发布/订阅)"
+                             Description="用于事件广播的异步通信模式">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsPubServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="PUB 端口">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding PubServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
+
+        <!-- 错误提示 -->
+        <Border IsVisible="{Binding PortConflictError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#20FF0000"
+                CornerRadius="4"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ci:FluentIcon Glyph="&#xE783;"
+                               Foreground="#FF4444"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding PortConflictError}"
+                           Foreground="#FF4444"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 操作按钮 -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button Content="重置"
+                    Command="{Binding ResetCommand}"
+                    Padding="16,8"/>
+            <Button Content="保存"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding CanSave}"
+                    Classes="accent"
+                    Padding="16,8"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

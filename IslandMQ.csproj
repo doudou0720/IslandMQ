@@ -8,11 +8,12 @@
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>True</EnableDynamicLoading>
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
-        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**;ExtraIsland\**</DefaultItemExcludes>
     </PropertyGroup>
 
     <PropertyGroup>
         <ClassIslandPluginSdkVersion>2.0.0.1</ClassIslandPluginSdkVersion>
+        <Version>0.0.1.2</Version>
     </PropertyGroup>
 
     <ItemGroup>

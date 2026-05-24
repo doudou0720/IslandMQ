@@ -65,10 +65,15 @@ public class IslandMQSettingsService
                     _logger?.LogWarning("Invalid PUB server port {Port}, resetting to default 5556", _settings.PubServerPort);
                     _settings.PubServerPort = 5556;
                 }
-                if (string.IsNullOrWhiteSpace(_settings.ServerIp))
+                if (string.IsNullOrWhiteSpace(_settings.NetMqServerIp))
                 {
-                    _logger?.LogWarning("Empty server IP, resetting to default 127.0.0.1");
-                    _settings.ServerIp = "127.0.0.1";
+                    _logger?.LogWarning("Empty NetMQ server IP, resetting to default 127.0.0.1");
+                    _settings.NetMqServerIp = "127.0.0.1";
+                }
+                if (string.IsNullOrWhiteSpace(_settings.HttpServerIp))
+                {
+                    _logger?.LogWarning("Empty HTTP server IP, resetting to default 127.0.0.1");
+                    _settings.HttpServerIp = "127.0.0.1";
                 }
 
                 _logger?.LogInformation("Settings loaded from {Path}", _settingsPath);

@@ -22,13 +22,17 @@ namespace IslandMQ
     {
         private ResponseSocket? _serverSocket;
         private Thread? _serverThread;
+        private Thread? _processThread;
         private volatile bool _isRunning;
+        private volatile bool _awaitingSend;
         private readonly string _endpoint = endpoint;
         private readonly ILogger<NetMQREQServer>? _logger = IAppHost.GetService<ILogger<NetMQREQServer>>();
         private readonly ManualResetEventSlim _threadExitEvent = new(true);
         private readonly object _threadLock = new();
         private volatile bool _disposed;
         private readonly object _disposeLock = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<(string Message, long RequestId)> _requestQueue = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<(long RequestId, string Response)> _responseQueue = new();
         private long _requestIdCounter;
         private const int ResponseVersion = 0;
 
@@ -117,6 +121,13 @@ namespace IslandMQ
                     Name = "NetMqServerThread"
                 };
                 _serverThread.Start();
+
+                _processThread = new Thread(ProcessRequests)
+                {
+                    IsBackground = true,
+                    Name = "NetMqProcessThread"
+                };
+                _processThread.Start();
             }
         }
 
@@ -182,6 +193,16 @@ namespace IslandMQ
 
                     _serverThread = null;
                 }
+
+                // 等待处理线程退出
+                if (_processThread != null)
+                {
+                    if (_processThread.IsAlive)
+                    {
+                        _processThread.Join(5000);
+                    }
+                    _processThread = null;
+                }
             }
         }
 
@@ -228,17 +249,28 @@ namespace IslandMQ
                     try
                     {
                         ResponseSocket socket = Volatile.Read(ref _serverSocket);
-                        // 使用更短的超时时间，确保能够及时响应停止请求
-                        if (socket != null && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
+                        if (socket != null)
                         {
-                            // 生成请求ID
-                            long requestId = GetNextRequestId();
+                            // 先处理响应队列，发送待发送的响应
+                            while (_responseQueue.TryDequeue(out var response))
+                            {
+                                socket.SendFrame(response.Response);
+                                _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", response.RequestId, response.Response);
+                                _awaitingSend = false;
+                            }
 
-                            _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
+                            // 只有在不等待发送时才接收新请求
+                            if (!_awaitingSend && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
+                            {
+                                // 生成请求ID
+                                long requestId = GetNextRequestId();
 
-                            string response = ProcessMessage(message, requestId);
-                            socket.SendFrame(response);
-                            _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", requestId, response);
+                                _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
+
+                                // 将请求放入队列（仅包含消息和请求ID），标记等待发送
+                                _requestQueue.Enqueue((message, requestId));
+                                _awaitingSend = true;
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -270,6 +302,40 @@ namespace IslandMQ
                     {
                         _threadExitEvent.Set();
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 处理队列中的请求，从队列中取出请求并处理，然后将响应放入响应队列由 RunServer 发送。
+        /// </summary>
+        private void ProcessRequests()
+        {
+            while (_isRunning)
+            {
+                try
+                {
+                    if (_requestQueue.TryDequeue(out var request))
+                    {
+                        string response = ProcessMessage(request.Message, request.RequestId);
+                        // 将响应放入响应队列，由 RunServer 线程在同一 socket 上发送
+                        _responseQueue.Enqueue((request.RequestId, response));
+                        _logger?.LogDebug("Queued response (Request ID: {RequestId}): {Response}", request.RequestId, response);
+                    }
+                    else
+                    {
+                        // 队列为空时短暂等待，避免CPU空转
+                        Thread.Sleep(10);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ExceptionHelper.IsFatal(ex))
+                    {
+                        throw;
+                    }
+                    ErrorOccurred?.Invoke(this, ex);
+                    _logger?.LogError(ex, "Error processing request: {Message}", ex.Message);
                 }
             }
         }

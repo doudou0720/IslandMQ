@@ -11,12 +11,12 @@
     <StackPanel Spacing="8">
         <ci:IconText Glyph="&#xE704;" Text="服务器配置" Margin="0 0 0 4" />
 
-        <!-- 服务器 IP 地址 -->
+        <!-- NetMQ 服务器 IP 地址 -->
         <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE968;}"
-                             Header="监听 IP 地址"
-                             Description="程序监听的 IP 地址，用于 NetMQ 客户端连接">
+                             Header="NetMQ 监听 IP 地址"
+                             Description="程序监听的 IP 地址，用于 NetMQ (REQ/PUB) 客户端连接">
             <fa:SettingsExpander.Footer>
-                <TextBox Text="{Binding ServerIp}"
+                <TextBox Text="{Binding NetMqServerIp}"
                          Watermark="例如: 127.0.0.1"
                          MinWidth="150"
                          MaxWidth="250"/>
@@ -67,6 +67,68 @@
             </fa:SettingsExpanderItem>
         </fa:SettingsExpander>
 
+        <!-- HTTP 服务器 -->
+        <fa:SettingsExpander IconSource="{ci:FluentIconSource &#xE774;}"
+                             Header="HTTP 服务器 (API + WebSocket)"
+                             Description="HTTP API 用于请求响应，WebSocket 用于实时推送">
+            <fa:SettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsHttpServerEnabled}"/>
+            </fa:SettingsExpander.Footer>
+            <fa:SettingsExpanderItem Content="HTTP 监听 IP"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBox Text="{Binding HttpServerIp}"
+                             Watermark="例如: 127.0.0.1"
+                             MinWidth="150"
+                             MaxWidth="250"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="HTTP 端口"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ci:Field VerticalAlignment="Center" Suffix="端口">
+                            <NumericUpDown Value="{Binding HttpServerPort}"
+                                           Minimum="1"
+                                           Maximum="65535"
+                                           Increment="1"
+                                           MinWidth="100"/>
+                        </ci:Field>
+                    </StackPanel>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="API 端点"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBlock Text="POST /api"
+                               Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="WebSocket 端点"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBlock Text="GET /ws"
+                               Foreground="{DynamicResource SystemFillColorSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="启用 CORS"
+                                     IsVisible="{Binding IsHttpServerSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <ToggleSwitch IsChecked="{Binding IsCorsEnabled}"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+            <fa:SettingsExpanderItem Content="CORS 允许来源"
+                                     IsVisible="{Binding IsCorsSettingsVisible}">
+                <fa:SettingsExpanderItem.Footer>
+                    <TextBox Text="{Binding CorsAllowedOrigins}"
+                             Watermark="留空仅允许同源，多个用逗号分隔"
+                             MinWidth="200"/>
+                </fa:SettingsExpanderItem.Footer>
+            </fa:SettingsExpanderItem>
+        </fa:SettingsExpander>
+
         <!-- 错误提示 -->
         <Border IsVisible="{Binding PortConflictError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 Background="#20FF0000"
@@ -79,6 +141,22 @@
                                VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding PortConflictError}"
                            Foreground="#FF4444"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 保存成功提示 -->
+        <Border IsVisible="{Binding SaveSuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#2000FF00"
+                CornerRadius="4"
+                Padding="12,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ci:FluentIcon Glyph="&#xE73E;"
+                               Foreground="#00AA00"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding SaveSuccessMessage}"
+                           Foreground="#00AA00"
                            VerticalAlignment="Center"/>
             </StackPanel>
         </Border>

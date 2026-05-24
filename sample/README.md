@@ -4,6 +4,13 @@
 
 但是理论上，任何支持 ZeroMQ (ZMQ) 语言都可以与 IslandMQ 插件进行通信。
 
+## 通信方式
+
+IslandMQ 支持两种通信方式：
+
+1. **ZeroMQ** - 原始的 NetMQ 通信方式
+2. **HTTP** - 通过 HTTP REST API 和 WebSocket（需要用户自行启用） 详见 [HTTP 服务说明](./HTTP.md)
+
 ## 依赖
 
 需要安装 pyzmq 库：
@@ -13,6 +20,8 @@ pip install pyzmq
 ```
 
 ## 使用说明
+
+> **重要提醒**: 默认端口为 5555 和 5556；示例代码应暴露可配置端口（例如 DEFAULT_PORT_1/DEFAULT_PORT_2 或配置对象）以便根据实际配置修改。
 
 ### REQ/REP 模式 (请求-应答)
 

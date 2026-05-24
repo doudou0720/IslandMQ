@@ -22,9 +22,9 @@
       },
       "NetMQ": {
         "type": "Direct",
-        "requested": "[4.0.4.1, )",
-        "resolved": "4.0.4.1",
-        "contentHash": "SLakd5bWcLVDbiGmUfo4h7z7c2p/u5yclwC/iQ4KXGgoq1H9ygEhpJzS6cUIucnw8LxpPZhS1Xlezxb2MEbhgA==",
+        "requested": "[4.0.4.2, )",
+        "resolved": "4.0.4.2",
+        "contentHash": "5D94aeuwYHQPEVCCyFjeSwJ1fLLtpQtoJG76cjbWN4S/35txgjiZ4LYdH2zOzUNr9n918Hu6ALZyoHDimkQAAg==",
         "dependencies": {
           "AsyncIO": "0.1.69",
           "NaCl.Net": "0.1.13",

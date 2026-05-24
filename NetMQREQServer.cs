@@ -30,7 +30,8 @@ namespace IslandMQ
         private readonly object _threadLock = new();
         private volatile bool _disposed;
         private readonly object _disposeLock = new();
-        private readonly System.Collections.Concurrent.ConcurrentQueue<(string Message, long RequestId, ResponseSocket? Socket)> _requestQueue = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<(string Message, long RequestId)> _requestQueue = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<(long RequestId, string Response)> _responseQueue = new();
         private long _requestIdCounter;
         private const int ResponseVersion = 0;
 
@@ -247,16 +248,26 @@ namespace IslandMQ
                     try
                     {
                         ResponseSocket socket = Volatile.Read(ref _serverSocket);
-                        // 使用更短的超时时间，确保能够及时响应停止请求
-                        if (socket != null && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
+                        if (socket != null)
                         {
-                            // 生成请求ID
-                            long requestId = GetNextRequestId();
+                            // 先处理响应队列，发送待发送的响应
+                            while (_responseQueue.TryDequeue(out var response))
+                            {
+                                socket.SendFrame(response.Response);
+                                _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", response.RequestId, response.Response);
+                            }
 
-                            _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
+                            // 使用更短的超时时间，确保能够及时响应停止请求
+                            if (socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
+                            {
+                                // 生成请求ID
+                                long requestId = GetNextRequestId();
 
-                            // 将请求放入队列
-                            _requestQueue.Enqueue((message, requestId, socket));
+                                _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
+
+                                // 将请求放入队列（仅包含消息和请求ID）
+                                _requestQueue.Enqueue((message, requestId));
+                            }
                         }
                     }
                     catch (Exception ex)

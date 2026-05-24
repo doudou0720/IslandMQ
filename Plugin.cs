@@ -377,6 +377,9 @@ namespace IslandMQ
 
         private bool _disposed;
 
+        /// <summary>
+        /// 释放插件使用的所有资源。
+        /// </summary>
         public void Dispose()
         {
             if (_disposed)
@@ -384,9 +387,10 @@ namespace IslandMQ
                 return;
             }
 
-            _netMqReqServer?.Dispose();
-            _netMqPubServer?.Dispose();
-            _siskHttpServer?.Dispose();
+            UnregisterLessonEvents();
+            StopNetMqReqServer();
+            StopNetMqPubServer();
+            StopSiskHttpServer();
 
             _disposed = true;
             GC.SuppressFinalize(this);

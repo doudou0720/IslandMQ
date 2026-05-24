@@ -52,10 +52,11 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         {
             if (_settings.NetMqServerIp != value)
             {
+                HasChanges = true;
                 _settings.NetMqServerIp = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
-                HasChanges = true;
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
@@ -70,10 +71,11 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         {
             if (_settings.HttpServerIp != value)
             {
+                HasChanges = true;
                 _settings.HttpServerIp = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
-                HasChanges = true;
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }

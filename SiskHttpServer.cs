@@ -213,6 +213,46 @@ public class SiskHttpServer : IDisposable
     }
 
     /// <summary>
+    /// 为响应添加 CORS 头（无请求上下文版本）
+    /// </summary>
+    private static HttpResponse AddCorsHeaders(HttpResponse response, bool isCorsEnabled, string allowedOrigins)
+    {
+        if (!isCorsEnabled)
+        {
+            return response;
+        }
+
+        // 当没有请求上下文时，如果 allowedOrigins 为空则不设置 CORS 头
+        if (string.IsNullOrWhiteSpace(allowedOrigins))
+        {
+            // 不设置 CORS 头（默认同源策略）
+        }
+        else
+        {
+            // 解析允许的 Origins
+            var allowedSet = allowedOrigins
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // 检查是否允许 "*" 通配符
+            if (allowedSet.Contains("*"))
+            {
+                response.Headers["Access-Control-Allow-Origin"] = "*";
+            }
+            else
+            {
+                // 如果不是 "*"，设置为配置的 origins（可能有多个，用逗号分隔）
+                response.Headers["Access-Control-Allow-Origin"] = allowedOrigins;
+            }
+        }
+
+        response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+        response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
+        response.Headers["Access-Control-Max-Age"] = "86400";
+        return response;
+    }
+
+    /// <summary>
     /// 为响应添加 CORS 头
     /// </summary>
     private static HttpResponse AddCorsHeaders(HttpRequest request, HttpResponse response, bool isCorsEnabled, string allowedOrigins)
@@ -225,16 +265,10 @@ public class SiskHttpServer : IDisposable
         // 获取请求的 Origin 头
         string? requestOrigin = request.Headers["Origin"];
 
-        // 如果 allowedOrigins 为空且没有请求 Origin，仅允许同源（不设置 Access-Control-Allow-Origin）
-        // 如果 allowedOrigins 为空但有请求 Origin，反射请求 Origin
+        // 如果 allowedOrigins 为空，不设置 Access-Control-Allow-Origin（仅允许同源）
         if (string.IsNullOrWhiteSpace(allowedOrigins))
         {
-            if (!string.IsNullOrEmpty(requestOrigin))
-            {
-                // 反射请求 Origin（允许同源请求）
-                response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
-            }
-            // 如果没有 Origin 头，不设置 CORS 头（默认同源策略）
+            // 不设置 CORS 头（默认同源策略）
         }
         else
         {
@@ -243,8 +277,13 @@ public class SiskHttpServer : IDisposable
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+            // 检查是否允许 "*" 通配符
+            if (allowedSet.Contains("*"))
+            {
+                response.Headers["Access-Control-Allow-Origin"] = "*";
+            }
             // 检查请求 Origin 是否在允许列表中
-            if (!string.IsNullOrEmpty(requestOrigin) && allowedSet.Contains(requestOrigin))
+            else if (!string.IsNullOrEmpty(requestOrigin) && allowedSet.Contains(requestOrigin))
             {
                 response.Headers["Access-Control-Allow-Origin"] = requestOrigin;
             }
@@ -263,7 +302,7 @@ public class SiskHttpServer : IDisposable
     private HttpResponse HandleOptionsPreflight(HttpRequest request)
     {
         var response = new HttpResponse(200, null);
-        return AddCorsHeaders(response, _isCorsEnabled, _corsAllowedOrigins);
+        return AddCorsHeaders(request, response, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>
@@ -404,7 +443,7 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 创建成功响应
     /// </summary>
-    private HttpResponse CreateSuccessResponse(string message, object? data, long requestId, int statusCode = 200)
+    private HttpResponse CreateSuccessResponse(string message, object? data, long requestId, int statusCode = 200, HttpRequest? request = null)
     {
         var response = new
         {
@@ -419,13 +458,15 @@ public class SiskHttpServer : IDisposable
         var json = JsonSerializer.Serialize(response);
         var content = new StringContent(json);
         var httpResponse = new HttpResponse(statusCode, content);
-        return AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
+        return request != null
+            ? AddCorsHeaders(request, httpResponse, _isCorsEnabled, _corsAllowedOrigins)
+            : AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>
     /// 创建错误响应
     /// </summary>
-    private HttpResponse CreateErrorResponse(string errorMessage, long requestId, int statusCode = 500)
+    private HttpResponse CreateErrorResponse(string errorMessage, long requestId, int statusCode = 500, HttpRequest? request = null)
     {
         var response = new
         {
@@ -440,7 +481,9 @@ public class SiskHttpServer : IDisposable
         var json = JsonSerializer.Serialize(response);
         var content = new StringContent(json);
         var httpResponse = new HttpResponse(statusCode, content);
-        return AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
+        return request != null
+            ? AddCorsHeaders(request, httpResponse, _isCorsEnabled, _corsAllowedOrigins)
+            : AddCorsHeaders(httpResponse, _isCorsEnabled, _corsAllowedOrigins);
     }
 
     /// <summary>

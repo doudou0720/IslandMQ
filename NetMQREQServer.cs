@@ -24,6 +24,7 @@ namespace IslandMQ
         private Thread? _serverThread;
         private Thread? _processThread;
         private volatile bool _isRunning;
+        private volatile bool _awaitingSend;
         private readonly string _endpoint = endpoint;
         private readonly ILogger<NetMQREQServer>? _logger = IAppHost.GetService<ILogger<NetMQREQServer>>();
         private readonly ManualResetEventSlim _threadExitEvent = new(true);
@@ -255,18 +256,20 @@ namespace IslandMQ
                             {
                                 socket.SendFrame(response.Response);
                                 _logger?.LogDebug("Sent (Request ID: {RequestId}): {Response}", response.RequestId, response.Response);
+                                _awaitingSend = false;
                             }
 
-                            // 使用更短的超时时间，确保能够及时响应停止请求
-                            if (socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
+                            // 只有在不等待发送时才接收新请求
+                            if (!_awaitingSend && socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(50), out string? message))
                             {
                                 // 生成请求ID
                                 long requestId = GetNextRequestId();
 
                                 _logger?.LogDebug("Received (Request ID: {RequestId}): {Message}", requestId, message);
 
-                                // 将请求放入队列（仅包含消息和请求ID）
+                                // 将请求放入队列（仅包含消息和请求ID），标记等待发送
                                 _requestQueue.Enqueue((message, requestId));
+                                _awaitingSend = true;
                             }
                         }
                     }

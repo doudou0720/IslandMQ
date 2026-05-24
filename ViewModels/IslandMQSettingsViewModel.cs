@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IslandMQ.Models;
@@ -247,9 +249,11 @@ public partial class IslandMQSettingsViewModel : ObservableObject
         {
             if (_settings.CorsAllowedOrigins != value)
             {
+                HasChanges = true;
                 _settings.CorsAllowedOrigins = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasChanges));
+                OnPropertyChanged(nameof(CanSave));
             }
         }
     }
@@ -288,9 +292,14 @@ public partial class IslandMQSettingsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 获取是否可以保存（没有冲突且有更改）。
+    /// 获取是否可以保存（没有端口冲突）。
     /// </summary>
-    public bool CanSave => string.IsNullOrEmpty(PortConflictError) && HasChanges;
+    public bool CanSave => string.IsNullOrEmpty(PortConflictError);
+
+    /// <summary>
+    /// 获取保存成功提示信息。
+    /// </summary>
+    public string SaveSuccessMessage { get; private set; } = "";
 
     /// <summary>
     /// 保存设置。
@@ -303,6 +312,20 @@ public partial class IslandMQSettingsViewModel : ObservableObject
             _saveAction?.Invoke();
             HasChanges = false;
             OnPropertyChanged(nameof(CanSave));
+
+            // 显示保存成功提示
+            SaveSuccessMessage = "保存成功";
+            OnPropertyChanged(nameof(SaveSuccessMessage));
+
+            // 3秒后清除成功提示
+            Task.Delay(3000).ContinueWith(_ =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    SaveSuccessMessage = "";
+                    OnPropertyChanged(nameof(SaveSuccessMessage));
+                });
+            });
         }
     }
 

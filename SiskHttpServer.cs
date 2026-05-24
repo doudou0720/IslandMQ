@@ -209,7 +209,7 @@ public class SiskHttpServer : IDisposable
     private HttpResponse HandleApiRequestGet(HttpRequest request)
     {
         long requestId = GetNextRequestId();
-        return ProcessApiMessage("{\"command\":\"ping\"}", requestId);
+        return ProcessApiMessage("{\"command\":\"ping\"}", requestId, request);
     }
 
     /// <summary>
@@ -234,16 +234,12 @@ public class SiskHttpServer : IDisposable
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            // 检查是否允许 "*" 通配符
+            // 仅当允许 "*" 通配符时才设置 CORS 头
             if (allowedSet.Contains("*"))
             {
                 response.Headers["Access-Control-Allow-Origin"] = "*";
             }
-            else
-            {
-                // 如果不是 "*"，设置为配置的 origins（可能有多个，用逗号分隔）
-                response.Headers["Access-Control-Allow-Origin"] = allowedOrigins;
-            }
+            // 否则不设置 Access-Control-Allow-Origin（避免写入无效的逗号分隔列表）
         }
 
         response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";

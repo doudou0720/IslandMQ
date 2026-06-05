@@ -46,7 +46,7 @@ jobs:
       uses: sigstore/gh-action-sigstore-python@v3.3.0
       with:
         inputs: |
-          ./cipx/IslandMQ.cipx
+          ./IslandMQ.Core/cipx/IslandMQ.cipx
         release-signing-artifacts: true
         upload-signing-artifacts: true
       env:
@@ -56,6 +56,6 @@ jobs:
       uses: softprops/action-gh-release@v3
       with:
         draft: true
-        body_path: ./cipx/checksums.md
-        files: './cipx/*'
+        body_path: ./IslandMQ.Core/cipx/checksums.md
+        files: './IslandMQ.Core/cipx/*'
         fail_on_unmatched_files: true

@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/IslandMQ.csproj",
+        "${workspaceFolder}/IslandMQ.Core/IslandMQ.csproj",
         "--configuration",
         "Debug",
         "--framework",

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableDynamicLoading>True</EnableDynamicLoading>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <DefaultItemExcludes>$(DefaultItemExcludes);ClassIsland\**;ExtraIsland\**</DefaultItemExcludes>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ClassIslandPluginSdkVersion>2.0.0.1</ClassIslandPluginSdkVersion>
+        <Version>0.0.2.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ClassIsland.PluginSdk" Version="$(ClassIslandPluginSdkVersion)">
+            <ExcludeAssets>runtime; native</ExcludeAssets>
+        </PackageReference>
+        <PackageReference Include="NetMQ" Version="4.0.4.1" />
+        <PackageReference Include="JsonSchema.Net" Version="9.2.1" />
+        <PackageReference Include="Sisk.HttpServer" Version="1.6.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\manifest.yml">
+            <Link>manifest.yml</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\README.md">
+            <Link>README.md</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\icon.png">
+            <Link>icon.png</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+</Project>

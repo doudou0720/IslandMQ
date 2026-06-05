@@ -9,7 +9,7 @@
       "program": "${env:ClassIsland_DebugBinaryFile}",
       "args": [
         "-epp",
-        "${workspaceFolder}/bin/Debug/net8.0"
+        "${workspaceFolder}/IslandMQ.Core/bin/Debug/net8.0"
       ],
       "cwd": "${env:ClassIsland_DebugBinaryDirectory}",
       "stopAtEntry": false,

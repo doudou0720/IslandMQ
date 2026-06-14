@@ -21,7 +21,7 @@
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
         <PackageReference Include="NetMQ" Version="4.0.4.2" />
-        <PackageReference Include="JsonSchema.Net" Version="9.2.1" />
+        <PackageReference Include="JsonSchema.Net" Version="9.2.2" />
         <PackageReference Include="Sisk.HttpServer" Version="1.6.2" />
     </ItemGroup>
 

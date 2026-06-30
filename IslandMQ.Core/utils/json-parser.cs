@@ -9,6 +9,8 @@ public static class JsonParser
 {
 
     
+    // ponytail: MIN=MAX=0, switch default says "为未来版本保留" — dead code.
+    // Fold this entire file into a one-liner: JsonParser0.Parse(JsonDocument.Parse(json).RootElement).
     /// <summary>
     /// 最小支持的版本号
     /// </summary>
@@ -88,6 +90,7 @@ public static class JsonParser
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;

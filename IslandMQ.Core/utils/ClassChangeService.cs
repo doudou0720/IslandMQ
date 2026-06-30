@@ -1,3 +1,6 @@
+// ponytail: Every public method (ReplaceClass, SwapClasses, BatchReplaceClasses, ClearClassChanges)
+// repeats the same Dispatcher.UIThread.CheckAccess() / InvokeAsync wrapper pattern (4 × 2 = 8 sites).
+// Extract a single RunOnUIThread(Action) helper to eliminate ~60 lines of boilerplate.
 using Avalonia.Threading;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Shared.Models.Profile;

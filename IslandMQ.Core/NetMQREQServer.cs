@@ -7,19 +7,23 @@ using NetMQ.Sockets;
 
 namespace IslandMQ
 {
-    /// <summary>
-    /// 提供基于 NetMQ 的请求-响应模式服务器实现
-    /// </summary>
-    /// <remarks>
-    /// 该类实现了 IDisposable 接口，用于管理 NetMQ 响应者套接字
-    /// 支持处理客户端请求并返回响应
-    /// </remarks>
-    /// <remarks>
-    /// 初始化一个 NetMQ 请求-响应服务器实例，并设置用于绑定的端点地址。
-    /// </remarks>
-    /// <param name="endpoint">要绑定的端点地址，例如 "tcp://127.0.0.1:5555"；默认值为 "tcp://127.0.0.1:5555"。</param>
-    public class NetMQREQServer(string endpoint = "tcp://127.0.0.1:5555") : IDisposable
-    {
+// ponytail: Dual-thread architecture (RunServer + ProcessRequests) with ConcurrentQueue,
+// _awaitingSend flag, Interlocked request IDs, ManualResetEventSlim, triple locks.
+// A single-thread loop doing ReceiveFrameString → ProcessMessage → SendFrame covers the same
+// work in ~150 fewer lines. See: NetMQREQServer dual-thread → single-thread.
+/// <summary>
+/// 提供基于 NetMQ 的请求-响应模式服务器实现
+/// </summary>
+/// <remarks>
+/// 该类实现了 IDisposable 接口，用于管理 NetMQ 响应者套接字
+/// 支持处理客户端请求并返回响应
+/// </remarks>
+/// <remarks>
+/// 初始化一个 NetMQ 请求-响应服务器实例，并设置用于绑定的端点地址。
+/// </remarks>
+/// <param name="endpoint">要绑定的端点地址，例如 "tcp://127.0.0.1:5555"；默认值为 "tcp://127.0.0.1:5555"。</param>
+public class NetMQREQServer(string endpoint = "tcp://127.0.0.1:5555") : IDisposable
+{
         private ResponseSocket? _serverSocket;
         private Thread? _serverThread;
         private Thread? _processThread;
@@ -275,6 +279,7 @@ namespace IslandMQ
                     }
                     catch (Exception ex)
                     {
+                        // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                         if (ExceptionHelper.IsFatal(ex))
                         {
                             throw;
@@ -286,6 +291,7 @@ namespace IslandMQ
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -330,6 +336,7 @@ namespace IslandMQ
                 }
                 catch (Exception ex)
                 {
+                    // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                     if (ExceptionHelper.IsFatal(ex))
                     {
                         throw;
@@ -376,6 +383,7 @@ namespace IslandMQ
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;

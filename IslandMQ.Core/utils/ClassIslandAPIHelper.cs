@@ -1,3 +1,4 @@
+// ponytail: 5 × ExceptionHelper.IsFatal(ex) guards — all noise, delete when ExceptionHelper.cs goes.
 using System.Globalization;
 using System.Text.Json;
 using ClassIsland.Core.Abstractions.Services;
@@ -118,6 +119,7 @@ namespace IslandMQ.Utils
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -234,6 +236,7 @@ namespace IslandMQ.Utils
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -301,6 +304,7 @@ namespace IslandMQ.Utils
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -484,6 +488,7 @@ namespace IslandMQ.Utils
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -659,6 +664,7 @@ namespace IslandMQ.Utils
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;

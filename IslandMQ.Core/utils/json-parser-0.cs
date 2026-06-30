@@ -1,3 +1,5 @@
+// ponytail: The JsonSchema.Evaluate() call (lines 80-84) + AllErrors helper (lines 16-35) can be
+// replaced with ~15 lines of manual property checks. Removes JsonSchema.Net dependency.
 using System.Text.Json;
 using Json.Schema;
 
@@ -113,6 +115,7 @@ public static class JsonParser0
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;

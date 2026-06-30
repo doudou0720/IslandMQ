@@ -1,3 +1,6 @@
+// ponytail: RunServerWithRetry (3 attempts × 10s delay), CancellationTokenSource orchestration,
+// ManualResetEventSlim + Task mixing, Task.Delay(5) busy-poll on empty queue.
+// Replace with Channel<string> blocking dequeue — no retry loop, no busy poll. ~250 lines saved.
 using ClassIsland.Shared;
 using IslandMQ.Utils;
 using Microsoft.Extensions.Logging;
@@ -196,6 +199,7 @@ public class NetMQPUBServer : IDisposable
             }
             catch (Exception ex)
             {
+                // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                 if (ExceptionHelper.IsFatal(ex))
                 {
                     throw;
@@ -405,6 +409,7 @@ public class NetMQPUBServer : IDisposable
                 }
                 catch (Exception ex)
                 {
+                    // ponytail: remove IsFatal guard — OOM/AV kill process anyway
                     if (ExceptionHelper.IsFatal(ex))
                     {
                         throw;
@@ -427,6 +432,7 @@ public class NetMQPUBServer : IDisposable
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;

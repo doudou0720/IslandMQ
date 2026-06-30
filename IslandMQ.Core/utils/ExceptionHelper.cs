@@ -1,3 +1,5 @@
+// ponytail: DELETE this file + all `if (ExceptionHelper.IsFatal(ex)) throw;` guards.
+// OOM / AccessViolation kill the process anyway — these checks are noise. ~50 call sites to remove.
 namespace IslandMQ.Utils;
 
 /// <summary>

@@ -1,3 +1,5 @@
+// ponytail: DELETE this entire file + JsonSchema.Net dependency. Replace with ~20 lines of
+// inline manual validation (check required fields, enum values) in json-parser-0.cs.
 using Json.Schema;
 
 namespace IslandMQ.Utils;

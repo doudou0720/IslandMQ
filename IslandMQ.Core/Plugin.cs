@@ -1,3 +1,5 @@
+// ponytail: REQ/PUB/HTTP each have identical Start/Stop/Error-handler pairs (3 × 2 = 6 methods, ~120 lines).
+// Abstract to StartServer<T>(...) + shared error handler → ~80 lines saved.
 using System.Reflection;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;

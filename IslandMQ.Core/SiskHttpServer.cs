@@ -115,6 +115,7 @@ public class SiskHttpServer : IDisposable
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;
@@ -194,6 +195,7 @@ public class SiskHttpServer : IDisposable
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;
@@ -215,6 +217,8 @@ public class SiskHttpServer : IDisposable
     /// <summary>
     /// 为响应添加 CORS 头（无请求上下文版本）
     /// </summary>
+    // ponytail: This overload is a strict subset of the (request, response, ...) version below.
+    // Delete it — callers can pass null for request. ~30 lines saved.
     private static HttpResponse AddCorsHeaders(HttpResponse response, bool isCorsEnabled, string allowedOrigins)
     {
         if (!isCorsEnabled)
@@ -331,6 +335,7 @@ public class SiskHttpServer : IDisposable
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;
@@ -394,6 +399,7 @@ public class SiskHttpServer : IDisposable
         }
         catch (Exception ex)
         {
+            // ponytail: remove IsFatal guard — OOM/AV kill process anyway
             if (ExceptionHelper.IsFatal(ex))
             {
                 throw;

@@ -1,3 +1,5 @@
+// ponytail: 9 properties × ~8 lines MVVM boilerplate + Reset() has 13 manual OnPropertyChanged calls.
+// Use [ObservableProperty] source generator — compresses to ~150 lines.
 using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;

@@ -35,9 +35,9 @@
       },
       "Sisk.HttpServer": {
         "type": "Direct",
-        "requested": "[1.6.2, )",
-        "resolved": "1.6.2",
-        "contentHash": "6GlUd45aAleKPF8Z4tQCTTfwn9/dfFIMZ3RLpRdkioUayBtYBl3W4sqiMxAj+GCb88mkEbac3nZV0oan+IN1cg=="
+        "requested": "[1.6.3, )",
+        "resolved": "1.6.3",
+        "contentHash": "l7TrHaqrjUV41TkZSUroYKSiYQcmv6gfI9bfCNzblbTvOjCk+6Dr0tCxSuzJbp+BegXwL5Ubjg7JRHTmuKVlYw=="
       },
       "AsyncImageLoader.Avalonia": {
         "type": "Transitive",

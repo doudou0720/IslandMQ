@@ -22,7 +22,7 @@
         </PackageReference>
         <PackageReference Include="NetMQ" Version="4.0.4.2" />
         <!-- ponytail: REMOVE — replace JsonSchema validation with inline manual checks (~20 lines) -->
-        <PackageReference Include="JsonSchema.Net" Version="9.2.2" />
+        <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
         <PackageReference Include="Sisk.HttpServer" Version="1.6.2" />
     </ItemGroup>
 

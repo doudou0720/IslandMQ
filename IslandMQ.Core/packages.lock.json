@@ -22,14 +22,14 @@
       },
       "NetMQ": {
         "type": "Direct",
-        "requested": "[4.0.4.2, )",
-        "resolved": "4.0.4.2",
-        "contentHash": "5D94aeuwYHQPEVCCyFjeSwJ1fLLtpQtoJG76cjbWN4S/35txgjiZ4LYdH2zOzUNr9n918Hu6ALZyoHDimkQAAg==",
+        "requested": "[4.0.4.3, )",
+        "resolved": "4.0.4.3",
+        "contentHash": "tJMTBVWneQgG4qwhcmDgK5wy7b4WWh+WovqzfCHp6dNcEkHSGxFRDvhlbFv758QCX/4RzblYGFVt9USEHh0B7w==",
         "dependencies": {
           "AsyncIO": "0.1.69",
           "NaCl.Net": "0.1.13",
           "System.Collections.Immutable": "10.0.7",
-          "System.Security.Cryptography.Xml": "10.0.6",
+          "System.Security.Cryptography.Xml": "10.0.10",
           "System.ServiceModel.Primitives": "10.0.652802"
         }
       },
@@ -457,10 +457,10 @@
       },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
-        "resolved": "10.0.6",
-        "contentHash": "Z0snzY7+gh+kjU3v9hQuu2q54eF0hosTTaI+aLYzFP2uUzySGHAxukjqWpeOioGUTZsM3PmPCn98OvJeD3KmkA==",
+        "resolved": "10.0.10",
+        "contentHash": "Qdx/MB+kxJoPIWZ0PpKpGSj8C02oaGXgue59HixUX/vinLsBIDYTX3RNW8mj9fBCeCmCp5+28KojlvI1N9hQPw==",
         "dependencies": {
-          "System.Formats.Asn1": "10.0.6"
+          "System.Formats.Asn1": "10.0.10"
         }
       },
       "Microsoft.CSharp": {
@@ -935,8 +935,8 @@
       },
       "System.Formats.Asn1": {
         "type": "Transitive",
-        "resolved": "10.0.6",
-        "contentHash": "/YXowB3idLgb3ix8pkZdr08EKSWoH9xyxywvXebcZnA1o1xUtSK3M8udHqN4xI50Ni6BuaOE1E9iCBiVpzkr7Q=="
+        "resolved": "10.0.10",
+        "contentHash": "Lt7KTFei7vmp/+JtTCLB3D3MNDFIfyFl9zETGtKFuoeaThNeHCyE7sJTZ10wfwHbd2z0rW72fjIpNXPkxEObaA=="
       },
       "System.Globalization": {
         "type": "Transitive",
@@ -1032,20 +1032,20 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
-        "resolved": "10.0.6",
-        "contentHash": "88tquaGJ1htm4DHWS6x9jwER7sFET2SVRN7HqO1FYZwE0diDcUmz0ajhVa8ZD2HGhDJBueSPjP/gqyP3gXtT2A==",
+        "resolved": "10.0.10",
+        "contentHash": "KG8t5RHczdgB3IWvRndpI0nE1DSo7ikDYSDbITxfgRFyIvnYiKzuPjaZOsPnwFQ1aOGUl9sEulJul9wlHLEUoA==",
         "dependencies": {
-          "Microsoft.Bcl.Cryptography": "10.0.6",
-          "System.Formats.Asn1": "10.0.6"
+          "Microsoft.Bcl.Cryptography": "10.0.10",
+          "System.Formats.Asn1": "10.0.10"
         }
       },
       "System.Security.Cryptography.Xml": {
         "type": "Transitive",
-        "resolved": "10.0.6",
-        "contentHash": "71yFkEElPZKZ9jbZQTe1CWeHYXEtnCXwZnHnfeA8pP47tCXBUoWk+6zSIZ7RXO90nZjXgPNil6BFGWb1OBqA5w==",
+        "resolved": "10.0.10",
+        "contentHash": "Mz6Y+s+uMQKj1H2BUF0OhlmaOQkLgSG34/IrUaBDirYBQ6bgwcFvO/XtXWcoDlBLFoFB0uKqDNhybHOd+fQK1A==",
         "dependencies": {
-          "Microsoft.Bcl.Cryptography": "10.0.6",
-          "System.Security.Cryptography.Pkcs": "10.0.6"
+          "Microsoft.Bcl.Cryptography": "10.0.10",
+          "System.Security.Cryptography.Pkcs": "10.0.10"
         }
       },
       "System.Security.Principal.Windows": {

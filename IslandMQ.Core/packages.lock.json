@@ -13,11 +13,11 @@
       },
       "JsonSchema.Net": {
         "type": "Direct",
-        "requested": "[9.2.2, )",
-        "resolved": "9.2.2",
-        "contentHash": "S65LahlS1jA1cVshtBx7lnFPbQoTgZ4QdHX8fZ94VwUBlMQ9IvA2bu4ElUdrdu0VrJImMCxs5rpyybcvsrnmRA==",
+        "requested": "[9.4.1, )",
+        "resolved": "9.4.1",
+        "contentHash": "7Nh0XyIse3a5nsc1nJJTECZVjxqHVE5jANGEPpQc2H+/M7u2sLueL93X6ZUuJLkLYy/pYzFmJhKYEpVIctaUZw==",
         "dependencies": {
-          "JsonPointer.Net": "7.0.1"
+          "JsonPointer.Net": "7.0.3"
         }
       },
       "NetMQ": {
@@ -435,8 +435,8 @@
       },
       "JsonPointer.Net": {
         "type": "Transitive",
-        "resolved": "7.0.1",
-        "contentHash": "5C497yxfktYFsqxKG+GUQPsMvBqIjzLkqtDEdMGsnBpl3/OB8DOvTo7LEyRX7AVc1kVVj0IX5zhmLrlbvAYEnw==",
+        "resolved": "7.0.3",
+        "contentHash": "It/10weZ3oA+BGL+Gqyw9M6wsi4Tc16vWwU+u7x6LBwty57Y3aUh7bfcn2VWAzgVTAfGuCPb5KUpsH6IFjR08A==",
         "dependencies": {
           "Humanizer.Core": "2.14.1",
           "Json.More.Net": "3.0.1"
